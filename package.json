@@ -1,0 +1,33 @@
+{
+  "name": "relite",
+  "version": "0.1.0",
+  "description": "a redux-like library for managing state with simpler api",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lucifier129/relite.git"
+  },
+  "keywords": [
+    "redux",
+    "react",
+    "state",
+    "functional"
+  ],
+  "author": "Jade Gu",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Lucifier129/relite/issues"
+  },
+  "homepage": "https://github.com/Lucifier129/relite#readme",
+  "devDependencies": {
+    "expect": "^1.20.2",
+    "mocha": "^3.0.2",
+    "rollup": "^0.21.0",
+    "rollup-plugin-babel": "^1.0.0",
+    "rollup-plugin-replace": "^1.1.0",
+    "uglify-js": "^2.6.1"
+  }
+}
