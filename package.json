@@ -27,12 +27,20 @@
   "homepage": "https://github.com/Lucifier129/relite#readme",
   "devDependencies": {
     "babel-cli": "^6.14.0",
+    "babel-loader": "^6.2.5",
+    "babel-polyfill": "^6.13.0",
     "babel-preset-latest": "^6.14.0",
+    "babel-preset-react": "^6.11.1",
+    "babel-preset-stage-0": "^6.5.0",
     "expect": "^1.20.2",
     "mocha": "^3.0.2",
+    "react": "^15.3.1",
+    "react-dom": "^15.3.1",
+    "react-lite": "^0.15.17",
     "rollup": "^0.21.0",
     "rollup-plugin-babel": "^1.0.0",
     "rollup-plugin-replace": "^1.1.0",
-    "uglify-js": "^2.6.1"
+    "uglify-js": "^2.6.1",
+    "webpack": "^1.13.2"
   }
 }

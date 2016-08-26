@@ -4,8 +4,7 @@ var path = require('path');
 module.exports = {
     watch: true,
     entry: {
-        'simple-spa': './examples/simple-spa/src',
-        'test-history': './examples/test-history/src',
+        'counter': ['babel-polyfill', './examples/counter/src'],
     },
     output: {
         publicPath: '/examples/',
@@ -18,7 +17,7 @@ module.exports = {
             test: /\.jsx?$/,
             loader: 'babel-loader',
             query: {
-                presets: ["latest"]
+                presets: ["latest", "stage-0", "react"]
             },
             exclude: /node_modules/
         }]
@@ -29,9 +28,9 @@ module.exports = {
         extensions: ['', '.js'],
         root: __dirname,
         alias: {
-            'create-app': path.join(__dirname, 'src'),
-            // 'react': 'react-lite',
-            // 'react-dom': 'react-lite',
+            'relite': path.join(__dirname, 'src'),
+            'react': 'react-lite',
+            'react-dom': 'react-lite',
         }
     }
 };

@@ -37,7 +37,7 @@ export default function createSotre(actions, initialState) {
 		}
 
 		let start = new Date()
-
+        let nextState = currentState
 		try {
 			isDispatching = true
 			nextState = actions[actionType](currentState, actionPayload)
@@ -50,6 +50,12 @@ export default function createSotre(actions, initialState) {
 	    }
 
 	    let updateState = nextState => {
+            if (_.isFn(nextState)) {
+                nextState = nextState(currentState, actionPayload)
+            }
+            if (_.isThenable(nextState)) {
+                return nextState.then(updateState)
+            }
 			replaceState(nextState, {
 				start,
 				end: new Date(),
@@ -61,12 +67,7 @@ export default function createSotre(actions, initialState) {
 			return nextState
 		}
 
-	    if (_.isThenable(nextState)) {
-	    	return nextState.then(updateState)
-	    }
-
 	    return updateState(nextState)
-
     }
 
     let bindingActions = Object.keys(actions).reduce((obj, actionType) => {

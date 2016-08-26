@@ -5,7 +5,7 @@ export default function createLogger({ name = "ROOT" }) {
     const logInfo = data => {
         const { actionType, actionPayload, previousState, currentState, start, end } = data
         const formattedTime = `${ start.getHours() }:${ pad(start.getMinutes()) }:${ pad(start.getSeconds()) }`
-        const takeTime = (getTime() - timeStore[key]).toFixed(2)
+        const takeTime = end.getTime() - start.getTime()
         const message = `${ name }: action-type [${ actionType }] @ ${ formattedTime } in ${ takeTime }ms`
 
         try {
