@@ -18,40 +18,20 @@ module.exports = {
             test: /\.jsx?$/,
             loader: 'babel-loader',
             query: {
-                stage: 0
+                presets: ["latest"]
             },
             exclude: /node_modules/
-        }],
-        postLoaders: [{
-            test: /controller\.jsx?$/,
-            loader: 'bundle-loader',
-            query: {
-                lazy: true,
-                name: './[2]/dest/[folder]',
-                regExp: /(.*)examples[\/\\](.*)[\/\\]src(.*)$/.source,
-            },
-            exclude: /node_modules/,
         }]
     },
     plugins: [
-        new webpack.optimize.CommonsChunkPlugin({
-            // names: ["app", "subPageA"]
-            // (choose the chunks, or omit for all chunks)
-
-            children: true,
-            // (select all children of chosen chunks)
-
-            // minChunks: 3,
-            // (3 children must share the module before it's moved)
-        })
     ],
     resolve: {
         extensions: ['', '.js'],
         root: __dirname,
         alias: {
             'create-app': path.join(__dirname, 'src'),
-            'react': 'react-lite',
-            'react-dom': 'react-lite',
+            // 'react': 'react-lite',
+            // 'react-dom': 'react-lite',
         }
     }
 };
