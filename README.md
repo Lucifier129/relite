@@ -89,7 +89,7 @@ let store = createStore(actions, intialState)
 
 /*
 * relite would bind state for every actions you gived to `createStore`
-* so the all functions in store.actions can only accept one argument, action-payload
+* so all the functions in store.actions can only accept one argument, action-payload
 * no need to bindActionCreators
 * each actions return currentState or promise with currentState
 */
@@ -99,7 +99,8 @@ EXEC_ASYNC(9) // -> Promise[[{ count: 10 }]]
 
 /**
 * subscribe store by store.subscribe
-* only the state was changed/update, relite would trigger the listeners
+* when the state was changed/updateed, relite would trigger the listeners
+* if action-handler return the same state, listeners would not be triggered
 */
 let unsubscribe = store.subscribe((data) => {
 	let {
