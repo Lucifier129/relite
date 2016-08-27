@@ -10529,21 +10529,21 @@
 	});
 	exports.createLogger = exports.createStore = undefined;
 
-	var _createStore2 = __webpack_require__(301);
+	var _createStore = __webpack_require__(301);
 
-	var _createStore3 = _interopRequireDefault(_createStore2);
+	var _createStore2 = _interopRequireDefault(_createStore);
 
-	var _createLogger2 = __webpack_require__(303);
+	var _createLogger = __webpack_require__(303);
 
-	var _createLogger3 = _interopRequireDefault(_createLogger2);
+	var _createLogger2 = _interopRequireDefault(_createLogger);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	exports.createStore = _createStore3.default; /**
-	                                              * relite
-	                                              */
-
-	exports.createLogger = _createLogger3.default;
+	/**
+	 * relite
+	 */
+	var createStore = exports.createStore = _createStore2.default;
+	var createLogger = exports.createLogger = _createLogger2.default;
 
 /***/ },
 /* 301 */
@@ -10578,6 +10578,11 @@
 	            }
 	        };
 	    };
+	    var publish = function publish(data) {
+	        listeners.forEach(function (listener) {
+	            return listener(data);
+	        });
+	    };
 
 	    var currentState = initialState;
 
@@ -10587,9 +10592,7 @@
 	    var replaceState = function replaceState(nextState, data, silent) {
 	        currentState = nextState;
 	        if (!silent) {
-	            listeners.forEach(function (listener) {
-	                return listener(data);
-	            });
+	            publish(data);
 	        }
 	    };
 
@@ -10608,16 +10611,15 @@
 	            isDispatching = false;
 	        }
 
-	        if (nextState === currentState) {
-	            return currentState;
-	        }
-
 	        var updateState = function updateState(nextState) {
 	            if (_.isFn(nextState)) {
-	                nextState = nextState(currentState, actionPayload);
+	                return updateState(nextState(currentState, actionPayload));
 	            }
 	            if (_.isThenable(nextState)) {
 	                return nextState.then(updateState);
+	            }
+	            if (nextState === currentState) {
+	                return currentState;
 	            }
 	            replaceState(nextState, {
 	                start: start,
@@ -10647,7 +10649,8 @@
 	        replaceState: replaceState,
 	        dispatch: dispatch,
 	        actions: bindingActions,
-	        subscribe: subscribe
+	        subscribe: subscribe,
+	        publish: publish
 	    };
 	} /**
 	   * createStore
@@ -10705,8 +10708,10 @@
 	        var actionPayload = data.actionPayload;
 	        var previousState = data.previousState;
 	        var currentState = data.currentState;
-	        var start = data.start;
-	        var end = data.end;
+	        var _data$start = data.start;
+	        var start = _data$start === undefined ? new Date() : _data$start;
+	        var _data$end = data.end;
+	        var end = _data$end === undefined ? new Date() : _data$end;
 
 	        var formattedTime = start.getHours() + ':' + pad(start.getMinutes()) + ':' + pad(start.getSeconds());
 	        var takeTime = end.getTime() - start.getTime();
@@ -10798,7 +10803,7 @@
 	};
 
 	var INCREMENT_IF_ODD = exports.INCREMENT_IF_ODD = function INCREMENT_IF_ODD(state) {
-	    return state.count % 2 !== 0 ? INCREMENT(state) : state;
+	    return state.count % 2 !== 0 ? INCREMENT : state;
 	};
 
 	var CHANGE_INPUT = exports.CHANGE_INPUT = function CHANGE_INPUT(state, event) {
@@ -10892,7 +10897,7 @@
 			_react2.default.createElement(
 				'button',
 				{ onClick: INCREMENT_ASYNC },
-				'async'
+				'incrementAsync'
 			),
 			' ',
 			_react2.default.createElement('input', { type: 'text', onChange: CHANGE_INPUT, value: input }),

@@ -3,7 +3,14 @@ const pad = num => ('0' + num).slice(-2)
 
 export default function createLogger({ name = "ROOT" }) {
     const logInfo = data => {
-        const { actionType, actionPayload, previousState, currentState, start, end } = data
+        const {
+            actionType,
+            actionPayload,
+            previousState,
+            currentState,
+            start = new Date(),
+            end = new Date()
+        } = data
         const formattedTime = `${ start.getHours() }:${ pad(start.getMinutes()) }:${ pad(start.getSeconds()) }`
         const takeTime = end.getTime() - start.getTime()
         const message = `${ name }: action-type [${ actionType }] @ ${ formattedTime } in ${ takeTime }ms`

@@ -21,7 +21,7 @@ export default function Counter(props) {
 			{' '}
 			<button onClick={INCREMENT_IF_ODD}>incrementIfOdd</button>
 			{' '}
-			<button onClick={INCREMENT_ASYNC}>async</button>
+			<button onClick={INCREMENT_ASYNC}>incrementAsync</button>
 			{' '}
 			<input type="text" onChange={CHANGE_INPUT} value={input} />
 			<button onClick={EXEC}>exec</button>

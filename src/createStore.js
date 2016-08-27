@@ -19,6 +19,9 @@ export default function createSotre(actions, initialState) {
             }
         }
     }
+    let publish = data => {
+        listeners.forEach(listener => listener(data))
+    }
 
     let currentState = initialState
 
@@ -26,63 +29,63 @@ export default function createSotre(actions, initialState) {
     let replaceState = (nextState, data, silent) => {
         currentState = nextState
         if (!silent) {
-            listeners.forEach(listener => listener(data))
+            publish(data)
         }
     }
 
     let isDispatching = false
     let dispatch = (actionType, actionPayload) => {
-    	if (isDispatching) {
-			throw new Error(`store.dispatch(actionType, actionPayload): handler may not dispatch`)
-		}
+        if (isDispatching) {
+            throw new Error(`store.dispatch(actionType, actionPayload): handler may not dispatch`)
+        }
 
-		let start = new Date()
+        let start = new Date()
         let nextState = currentState
-		try {
-			isDispatching = true
-			nextState = actions[actionType](currentState, actionPayload)
-		} finally {
-	    	isDispatching = false
-	    }
+        try {
+            isDispatching = true
+            nextState = actions[actionType](currentState, actionPayload)
+        } finally {
+            isDispatching = false
+        }
 
-	    if (nextState === currentState) {
-	    	return currentState
-	    }
-
-	    let updateState = nextState => {
+        let updateState = nextState => {
             if (_.isFn(nextState)) {
-                nextState = nextState(currentState, actionPayload)
+                return updateState(nextState(currentState, actionPayload))
             }
             if (_.isThenable(nextState)) {
                 return nextState.then(updateState)
             }
-			replaceState(nextState, {
-				start,
-				end: new Date(),
-				actionType,
-				actionPayload,
-				previousState: currentState,
-				currentState: nextState,
-			})
-			return nextState
-		}
+            if (nextState === currentState) {
+                return currentState
+            }
+            replaceState(nextState, {
+                start,
+                end: new Date(),
+                actionType,
+                actionPayload,
+                previousState: currentState,
+                currentState: nextState,
+            })
+            return nextState
+        }
 
-	    return updateState(nextState)
+        return updateState(nextState)
     }
 
     let bindingActions = Object.keys(actions).reduce((obj, actionType) => {
-    	if (_.isFn(actions[actionType])) {
-    		obj[actionType] = actionPayload => dispatch(actionType, actionPayload)
-    	}
-    	return obj
+        if (_.isFn(actions[actionType])) {
+            obj[actionType] = actionPayload => dispatch(actionType, actionPayload)
+        }
+        return obj
     }, {})
 
 
     return {
-    	getState,
-    	replaceState,
-    	dispatch,
-    	actions: bindingActions,
-    	subscribe,
+        getState,
+        replaceState,
+        dispatch,
+        actions: bindingActions,
+        subscribe,
+        publish,
     }
 }

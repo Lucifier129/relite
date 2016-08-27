@@ -9,7 +9,7 @@ export let INCREMENT = (state) => {
 }
 
 export let INCREMENT_ASYNC = async (state) => {
-    await delay(1000)
+    await delay(10)
     return INCREMENT
 }
 
@@ -25,24 +25,11 @@ export let INCREMENT_IF_ODD = (state) => {
     return state.count % 2 !== 0 ? INCREMENT : state
 }
 
-export let CHANGE_INPUT = (state, event) => {
-    let { value: input } = event.currentTarget
-    return {
-        ...state,
-        input,
-    }
-}
-
-export let EXEC = (state) => {
-    let { count, input } = state
+export let EXEC_BY = (state, input) => {
     let value = Number(input)
-    if (isNaN(value)) {
-        return state
-    }
-    count += value
-    return {
+    return isNaN(value) ? state : {
         ...state,
-        count,
+        count: state.count + value
     }
 }
 
