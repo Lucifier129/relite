@@ -3,7 +3,7 @@
  */
 import * as _ from './util'
 
-export default function createSotre(actions, initialState) {
+export default function createStore(actions, initialState) {
 
     if (!_.isObj(actions)) {
         throw new Error(`Expected first argument to be an object`)
@@ -48,15 +48,24 @@ export default function createSotre(actions, initialState) {
             isDispatching = false
         }
 
+        let isAsync = false
         let updateState = nextState => {
             if (_.isFn(nextState)) {
                 return updateState(nextState(currentState, actionPayload))
             }
             if (_.isThenable(nextState)) {
+                isAsync = true
                 return nextState.then(updateState)
             }
             if (nextState === currentState) {
                 return currentState
+            }
+            if (isAsync) {
+                // merge currentState and nextState to make sure all state is new
+                nextState = {
+                    ...currentState,
+                    ...nextState,
+                }
             }
             replaceState(nextState, {
                 start,
