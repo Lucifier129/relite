@@ -1,8 +1,11 @@
 const attr = 'info' in console ? 'info' : "log"
 const pad = num => ('0' + num).slice(-2)
+const identity = obj => obj
 
-export default function createLogger({ name = "ROOT" }) {
+export default function createLogger({ name, filter }) {
+    filter = typeof filter === 'function' ? filter : identity
     const logInfo = data => {
+        data = filter(data)
         const {
             actionType,
             actionPayload,
@@ -13,7 +16,7 @@ export default function createLogger({ name = "ROOT" }) {
         } = data
         const formattedTime = `${ start.getHours() }:${ pad(start.getMinutes()) }:${ pad(start.getSeconds()) }`
         const takeTime = end.getTime() - start.getTime()
-        const message = `${ name }: action-type [${ actionType }] @ ${ formattedTime } in ${ takeTime }ms`
+        const message = `${ name || 'ROOT' }: action-type [${ actionType }] @ ${ formattedTime } in ${ takeTime }ms`
 
         try {
             console.groupCollapsed(message)

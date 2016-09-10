@@ -13,3 +13,7 @@ export function isThenable(obj) {
 export function isObj(obj) {
 	return Object.prototype.toString.call(obj) === '[object Object]'
 }
+
+export function identity(obj) {
+	return obj
+}
