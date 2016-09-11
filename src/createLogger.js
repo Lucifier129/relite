@@ -12,11 +12,12 @@ export default function createLogger({ name, filter }) {
             previousState,
             currentState,
             start = new Date(),
-            end = new Date()
+            end = new Date(),
+            isAsync
         } = data
         const formattedTime = `${ start.getHours() }:${ pad(start.getMinutes()) }:${ pad(start.getSeconds()) }`
         const takeTime = end.getTime() - start.getTime()
-        const message = `${ name || 'ROOT' }: action-type [${ actionType }] @ ${ formattedTime } in ${ takeTime }ms`
+        const message = `${ name || 'ROOT' }: action-type [${ actionType }] @ ${ formattedTime } in ${ takeTime }ms, ${isAsync ? 'async' : 'sync'}`
 
         try {
             console.groupCollapsed(message)

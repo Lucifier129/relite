@@ -27,7 +27,15 @@ export default function createStore(actions, initialState) {
 
     let getState = () => currentState
     let replaceState = (nextState, data, silent) => {
-        currentState = nextState
+        if (data && data.isAsync) {
+            // merge currentState and nextState to make sure all state is new
+            currentState = {
+                ...currentState,
+                ...nextState,
+            }
+        } else {
+            currentState = nextState
+        }
         if (!silent) {
             publish(data)
         }
@@ -44,6 +52,8 @@ export default function createStore(actions, initialState) {
         try {
             isDispatching = true
             nextState = actions[actionType](currentState, actionPayload)
+        } catch (error) {
+            throw error
         } finally {
             isDispatching = false
         }
@@ -60,14 +70,8 @@ export default function createStore(actions, initialState) {
             if (nextState === currentState) {
                 return currentState
             }
-            if (isAsync) {
-                // merge currentState and nextState to make sure all state is new
-                nextState = {
-                    ...currentState,
-                    ...nextState,
-                }
-            }
             replaceState(nextState, {
+                isAsync,
                 start,
                 end: new Date(),
                 actionType,
@@ -81,20 +85,20 @@ export default function createStore(actions, initialState) {
         return updateState(nextState)
     }
 
-    let bindingActions = Object.keys(actions).reduce((obj, actionType) => {
+    let store = {
+        getState,
+        replaceState,
+        dispatch,
+        subscribe,
+        publish,
+    }
+
+    store.actions = Object.keys(actions).reduce((obj, actionType) => {
         if (_.isFn(actions[actionType])) {
-            obj[actionType] = actionPayload => dispatch(actionType, actionPayload)
+            obj[actionType] = actionPayload => store.dispatch(actionType, actionPayload)
         }
         return obj
     }, {})
 
-
-    return {
-        getState,
-        replaceState,
-        dispatch,
-        actions: bindingActions,
-        subscribe,
-        publish,
-    }
+    return store
 }
