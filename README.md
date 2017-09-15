@@ -88,7 +88,7 @@ let initialState = {
 let store = createStore(actions, intialState)
 
 /*
-* relite would bind state for every actions you gived to `createStore`
+* relite will bind state for every actions you gave to `createStore`
 * so all the functions in store.actions can only accept one argument, action-payload
 * no need to bindActionCreators
 * each actions return currentState or promise with currentState
