@@ -15,7 +15,7 @@ export default function Counter(props) {
 		<div>
 			<span>count: { count }</span>
 			{' '}
-			<button onClick={INCREMENT}>+</button>
+			<button onClick={INCREMENT.bind(this, 'aaa', 'bbb', {'hello': 'world'})}>+</button>
 			{' '}
 			<button onClick={DECREMENT}>-</button>
 			{' '}

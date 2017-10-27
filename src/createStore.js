@@ -51,7 +51,7 @@ export default function createStore(actions, initialState) {
         let nextState = currentState
         try {
             isDispatching = true
-            nextState = actions[actionType](currentState, actionPayload)
+            nextState = actions[actionType](currentState, ...Object.values(actionPayload))
         } catch (error) {
             throw error
         } finally {
@@ -61,7 +61,7 @@ export default function createStore(actions, initialState) {
         let isAsync = false
         let updateState = nextState => {
             if (_.isFn(nextState)) {
-                return updateState(nextState(currentState, actionPayload))
+                return updateState(nextState(currentState, ...Object.values(actionPayload)))
             }
             if (_.isThenable(nextState)) {
                 isAsync = true
@@ -95,7 +95,9 @@ export default function createStore(actions, initialState) {
 
     store.actions = Object.keys(actions).reduce((obj, actionType) => {
         if (_.isFn(actions[actionType])) {
-            obj[actionType] = actionPayload => store.dispatch(actionType, actionPayload)
+            obj[actionType] = function(){ //箭头函数没有arguments
+                store.dispatch(actionType, arguments)
+              }
         }
         return obj
     }, {})
