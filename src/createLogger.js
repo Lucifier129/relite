@@ -1,4 +1,4 @@
-const attr = 'info' in console ? 'info' : "log"
+const attr = typeof console !== 'undefined' && 'info' in console ? 'info' : 'log'
 const pad = num => ('0' + num).slice(-2)
 const identity = obj => obj
 
