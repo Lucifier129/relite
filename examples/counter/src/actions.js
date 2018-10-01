@@ -1,6 +1,7 @@
 // actions
 
-export let INCREMENT = (state) => {
+export let INCREMENT = (state, a,b,c) => {
+    console.log(state, a,b,c)
     let count = state.count + 1
     return {
         ...state,

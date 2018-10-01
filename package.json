@@ -6,7 +6,8 @@
   "scripts": {
     "test": "mocha",
     "build": "babel ./src --out-dir ./lib",
-    "prepublish": "npm test && npm run build"
+    "prepublish": "npm test && npm run build",
+    "webpack": "webpack"
   },
   "repository": {
     "type": "git",
