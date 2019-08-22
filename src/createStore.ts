@@ -1,16 +1,16 @@
 /**
  * createStore
  */
+import Relite from './index'
 import * as _ from './util'
 
-export default function createStore(actions, initialState) {
-
+const createStore: Relite.CreateStore = (actions, initialState) => {
     if (!_.isObj(actions)) {
         throw new Error(`Expected first argument to be an object`)
     }
 
-    let listeners = []
-    let subscribe = listener => {
+    let listeners: Relite.Listener[] = []
+    let subscribe: Relite.Subscribe = (listener: Relite.Listener) => {
         listeners.push(listener)
         return () => {
             let index = listeners.indexOf(listener)
@@ -19,14 +19,14 @@ export default function createStore(actions, initialState) {
             }
         }
     }
-    let publish = data => {
+    let publish: Relite.Publish = (data: Relite.Data) => {
         listeners.forEach(listener => listener(data))
     }
 
-    let currentState = initialState
+    let currentState: Relite.State = initialState
 
-    let getState = () => currentState
-    let replaceState = (nextState, data, silent) => {
+    let getState: Relite.GetState = () => currentState
+    let replaceState: Relite.ReplaceState = (nextState, data, silent) => {
         if (data && data.isAsync) {
             // merge currentState and nextState to make sure all state is new
             currentState = {
@@ -41,14 +41,14 @@ export default function createStore(actions, initialState) {
         }
     }
 
-    let isDispatching = false
-    let dispatch = (actionType, actionPayload) => {
+    let isDispatching: boolean = false
+    let dispatch: Relite.Dispatch = (actionType, actionPayload) => {
         if (isDispatching) {
             throw new Error(`store.dispatch(actionType, actionPayload): handler may not dispatch`)
         }
 
-        let start = new Date()
-        let nextState = currentState
+        let start: Date = new Date()
+        let nextState: Relite.State = currentState
         try {
             isDispatching = true
             nextState = actions[actionType](currentState, actionPayload)
@@ -58,14 +58,15 @@ export default function createStore(actions, initialState) {
             isDispatching = false
         }
 
-        let isAsync = false
-        let updateState = nextState => {
+        let isAsync: boolean = false
+        let updateState: Relite.UpdateState = nextState => {
             if (_.isFn(nextState)) {
-                return updateState(nextState(currentState, actionPayload))
+              
+                return updateState((nextState as Relite.NextStateFun)(currentState, actionPayload))
             }
             if (_.isThenable(nextState)) {
                 isAsync = true
-                return nextState.then(updateState)
+                return (nextState as Relite.NextStatePromise).then(updateState)
             }
             if (nextState === currentState) {
                 return currentState
@@ -77,7 +78,7 @@ export default function createStore(actions, initialState) {
                 actionType,
                 actionPayload,
                 previousState: currentState,
-                currentState: nextState,
+                currentState: nextState
             })
             return nextState
         }
@@ -85,7 +86,7 @@ export default function createStore(actions, initialState) {
         return updateState(nextState)
     }
 
-    let store = {
+    let store: Relite.Store = {
         getState,
         replaceState,
         dispatch,
@@ -102,3 +103,5 @@ export default function createStore(actions, initialState) {
 
     return store
 }
+
+export default createStore

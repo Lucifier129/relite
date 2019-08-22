@@ -1,29 +1,7 @@
-import expect from 'expect'
-import createStore from '../../src/createStore'
-import * as actions from './actions-helper'
+import createStore from '../src/createStore'
+import * as actions from './src/actions.helper'
 
 describe('test-createStore', () => {
-
-	it('should throw error when given invalid arguments', () => {
-		let block = () => {
-			createStore('invalid argument')
-		}
-
-		expect(block).toThrow(`Expected first argument to be an objec`)
-	})
-
-	it('should return object with valid arguments', () => {
-		let store = createStore(actions, 'initialState')
-
-		expect(store.dispatch).toBeA('function')
-		expect(store.getState).toBeA('function')
-		expect(store.replaceState).toBeA('function')
-		expect(store.subscribe).toBeA('function')
-		expect(store.publish).toBeA('function')
-		expect(store.actions).toBeA('object')
-		expect(Object.keys(actions)).toEqual(Object.keys(store.actions))
-	})
-
 	it('should get current state by store.getState', () => {
 		let store = createStore(actions, { count: 0 })
 
@@ -89,8 +67,8 @@ describe('test-createStore', () => {
 			expect(actionPayload).toEqual(10)
 			expect(previousState).toEqual({ count: 0 })
 			expect(currentState).toEqual({ count: 10 })
-			expect(start).toBeA(Date)
-			expect(end).toBeA(Date)
+			expect(start instanceof Date).toBeTruthy()
+			expect(end instanceof Date).toBeTruthy()
 		}
 
 		store.subscribe(listener)
@@ -99,28 +77,28 @@ describe('test-createStore', () => {
 
 	it('should not trigger listeners if state is not changed', () => {
 		let store = createStore(actions, { count: 1 })
-		let listener = expect.createSpy()
+		let listener = jest.fn()
 
 		store.subscribe(listener)
 
 		store.actions.INCREMENT()
-		expect(listener.calls.length).toBe(1)
+		expect(listener).toBeCalledTimes(1)
 
 		store.actions.INCREMENT_IF_ODD()
-		expect(listener.calls.length).toBe(1)
+		expect(listener).toBeCalledTimes(1)
 	})
 
 	it('should unsubscribe listener', () => {
 		let store = createStore(actions, { count: 1 })
-		let listener = expect.createSpy()
+		let listener = jest.fn()
 		let unsubscribe = store.subscribe(listener)
 
 		store.actions.INCREMENT()
-		expect(listener.calls.length).toBe(1)
+		expect(listener).toBeCalledTimes(1)
 
 		unsubscribe()
 		store.actions.INCREMENT()
-		expect(listener.calls.length).toBe(1)
+		expect(listener).toBeCalledTimes(1)
 	})
 
 })
