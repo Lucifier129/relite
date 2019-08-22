@@ -1,10 +1,15 @@
-const attr = typeof console !== 'undefined' && 'info' in console ? 'info' : 'log'
-const pad = num => ('0' + num).slice(-2)
-const identity = obj => obj
+/**
+ * createStore
+ */
+import Relite from './index'
 
-export default function createLogger({ name, filter }) {
+const attr: string = typeof console !== 'undefined' && 'info' in console ? 'info' : 'log'
+const pad: Relite.Pad = num => ('0' + num).slice(-2)
+const identity: Relite.Identity = obj => obj
+
+const createLogger: Relite.CreateLogger = ({ name, filter }) => {
     filter = typeof filter === 'function' ? filter : identity
-    const logInfo = data => {
+    const logInfo: Relite.LogInfo = (data: Relite.Data) => {
         data = filter(data)
         const {
             actionType,
@@ -15,9 +20,9 @@ export default function createLogger({ name, filter }) {
             end = new Date(),
             isAsync
         } = data
-        const formattedTime = `${ start.getHours() }:${ pad(start.getMinutes()) }:${ pad(start.getSeconds()) }`
-        const takeTime = end.getTime() - start.getTime()
-        const message = `${ name || 'ROOT' }: action-type [${ actionType }] @ ${ formattedTime } in ${ takeTime }ms, ${isAsync ? 'async' : 'sync'}`
+        const formattedTime: string = `${ start.getHours() }:${ pad(start.getMinutes()) }:${ pad(start.getSeconds()) }`
+        const takeTime: number = end.getTime() - start.getTime()
+        const message: string = `${ name || 'ROOT' }: action-type [${ actionType }] @ ${ formattedTime } in ${ takeTime }ms, ${isAsync ? 'async' : 'sync'}`
 
         try {
             console.groupCollapsed(message)
@@ -49,3 +54,5 @@ export default function createLogger({ name, filter }) {
 
     return logInfo
 }
+
+export default createLogger
