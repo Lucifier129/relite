@@ -1,6 +1,6 @@
 {
   "name": "relite",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "a redux-like library for managing state with simpler api",
   "main": "dist/lib/index.js",
   "typings": "dist/types/index.d.ts",
@@ -8,10 +8,11 @@
     "dist"
   ],
   "scripts": {
-    "test": "jest --coverage",
+    "test": "jest",
     "test:watch": "jest --coverage --watch",
     "prebuild": "rimraf dist",
-    "build": " tsc"
+    "build": " tsc",
+    "prepare": "npm run test && npm run build"
   },
   "repository": {
     "type": "git",
