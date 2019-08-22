@@ -1,6 +1,6 @@
 {
   "name": "relite",
-  "version": "1.0.6",
+  "version": "2.0.0",
   "description": "a redux-like library for managing state with simpler api",
   "main": "dist/lib/index.js",
   "typings": "dist/types/index.d.ts",
