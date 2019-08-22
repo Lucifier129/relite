@@ -15,3 +15,5 @@ _site
 package-lock.json
 
 dist
+
+coverage
