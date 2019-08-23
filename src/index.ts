@@ -392,7 +392,7 @@ export interface Filter {
 }
 
 /**
- * A util to format time string.
+ * A time string formatter.
  */
 export interface Pad {
   (num: number): string
