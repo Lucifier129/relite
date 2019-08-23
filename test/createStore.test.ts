@@ -1,4 +1,4 @@
-import createStore from '../src/createStore'
+import { createStore } from '../src/index'
 import * as actions from './src/actions.helper'
 
 describe('test-createStore', () => {
