@@ -71,18 +71,18 @@ export interface Actions {
 }
 
 /**
- * An `InnerAction` is a function curried from `action` to call `dispatch`.
- * The `state` in `InnerAction` is link to the `state` in the `store`.
+ * An `CurryingAction` is a function curried from `action` to call `dispatch`.
+ * The `state` in `CurryingAction` is link to the `state` in the `store`.
  */
-export interface InnerAction {
+export interface CurryingAction {
   (payload?: Payload): State | Promise<State>
 }
 
 /**
- * The collection of `InnerAction`
+ * The collection of `CurryingAction`
  */
-export interface InnerActions {
-  [propName: string]: InnerAction
+export interface CurryingActions {
+  [propName: string]: CurryingAction
 }
 
 /** Data */
@@ -226,11 +226,11 @@ export interface Store {
    * Contain all caller curring from `action` passed in `createStore` and
    * `dispatch`. Could call dispatch whith mapped `action` type.
    * 
-   * InnerAction
+   * CurryingAction
    * 
    * @param [payload] Extend from `actionPayload` of 'Action' parameters.
    */
-  actions: InnerActions
+  actions: CurryingActions
 
   /**
    * Reads the state tree managed by the store.
