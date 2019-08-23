@@ -16,13 +16,9 @@ export const createLogger = $createLogger
 export default Relite
 
 namespace Relite {
-  export interface State {
-    [propName: string]: any
-  }
-
   export type Type = string
-
   export type Payload = any
+  export type State = string
 
   export interface Data {
     actionType: Type
@@ -41,16 +37,16 @@ namespace Relite {
     ): State | Promise<State>
   }
 
+  export interface Actions {
+    [propName: string]: Action
+  }
+
   export interface InnerAction {
     (payload?: Payload): State | Promise<State>
   }
 
   export interface InnerActions {
     [propName: string]: InnerAction
-  }
-
-  export interface Actions {
-    [propName: string]: Action
   }
 
   export interface Store {
@@ -122,7 +118,7 @@ namespace Relite {
   }
   
   export interface LogInfo {
-    (data: any): void
+    (data: Data): void
   }
 
   export interface CreateLogger {

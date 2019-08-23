@@ -19,7 +19,7 @@ const createStore: Relite.CreateStore = (actions, initialState) => {
             }
         }
     }
-    let publish: Relite.Publish = (data: Relite.Data) => {
+    let publish: Relite.Publish = data => {
         listeners.forEach(listener => listener(data))
     }
 

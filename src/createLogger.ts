@@ -9,7 +9,7 @@ const identity: Relite.Identity = obj => obj
 
 const createLogger: Relite.CreateLogger = ({ name, filter }) => {
     filter = typeof filter === 'function' ? filter : identity
-    const logInfo: Relite.LogInfo = (data: Relite.Data) => {
+    let logInfo: Relite.LogInfo = data => {
         data = filter(data)
         const {
             actionType,
