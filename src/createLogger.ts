@@ -6,11 +6,11 @@ import { Pad, Filter, LoggerCreator, LogInfo, Action } from './index'
 const attr: string = typeof console !== 'undefined' && 'info' in console ? 'info' : 'log'
 const pad: Pad = num => ('0' + num).slice(-2)
 
-const createLogger: LoggerCreator = <S extends object, A extends Action<S>>({ name, filter }) => {
-    const identity: Filter<S, A> = obj => obj 
+const createLogger: LoggerCreator = <S extends object>({ name, filter }) => {
+    const identity: Filter<S> = obj => obj 
     filter = typeof filter === 'function' ? filter : identity
     
-    let logInfo: LogInfo<S, A> = data => {
+    let logInfo: LogInfo<S> = data => {
         data = filter(data)
         const {
             actionType,

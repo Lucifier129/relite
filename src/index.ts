@@ -293,9 +293,9 @@ export const createStore: StoreCreator = $createStore
  * logger creators.
  */
 export interface LoggerCreator {
-  <S extends object, A extends Action<S>>(
-    props?: LoggerProps<S, A>
-  ): LogInfo<S, A>
+  <S extends object>(
+    props?: LoggerProps<S>
+  ): LogInfo<S>
 }
 
 /**
@@ -312,11 +312,11 @@ export const createLogger: LoggerCreator = $createLogger
 /**
  * The arguments of LoggerCreator.
  */
-export interface LoggerProps<S extends object, A extends Action<S>> {
+export interface LoggerProps<S extends object> {
   /** the identifier of this logger */
   name?: string
   /** a middleware which will adapt `data` */
-  filter?: Filter<S, A>
+  filter?: Filter<S>
 }
 
 /**
@@ -324,7 +324,7 @@ export interface LoggerProps<S extends object, A extends Action<S>> {
  * 
  * @param data A record of store state change.
  */
-export interface LogInfo<S extends object, A extends Action<S>> {
+export interface LogInfo<S extends object> {
   (data: Data<S>): void
 }
 
@@ -335,7 +335,7 @@ export interface LogInfo<S extends object, A extends Action<S>> {
  * 
  * @returns The `data` after sorting.
  **/
-export interface Filter<S extends object, A extends Action<S>> {
+export interface Filter<S extends object> {
   (data: Data<S>): Data<S>
 }
 
