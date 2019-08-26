@@ -1,15 +1,12 @@
 import {
   StoreCreator,
   Store,
-  Payload,
   Subscribe,
   Listener,
   Publish,
   ReplaceState,
   Dispatch,
   StateUpdator,
-  NextStateFun,
-  NextStatePromise,
   Data,
   Action,
   Curring
@@ -20,13 +17,13 @@ import * as _ from './util'
 /**
  * createStore
  */
-const createStore: StoreCreator = <S, P extends Payload, A extends Action<S, P>, AS extends Record<string, A>>(actions, initialState) => {
+const createStore: StoreCreator = <S extends object, AS extends Record<string, Action<S>>>(actions, initialState) => {
   if (!_.isObj(actions)) {
     throw new Error(`Expected first argument to be an object`)
   }
 
-  let listeners: Listener<S, P>[] = []
-  let subscribe: Subscribe<S, P> = (listener: Listener<S, P>) => {
+  let listeners: Listener<S>[] = []
+  let subscribe: Subscribe<S> = (listener: Listener<S>) => {
     listeners.push(listener)
     return () => {
       let index = listeners.indexOf(listener)
@@ -36,14 +33,14 @@ const createStore: StoreCreator = <S, P extends Payload, A extends Action<S, P>,
     }
   }
 
-  let publish: Publish<S, P> = data => {
+  let publish: Publish<S> = data => {
     listeners.forEach(listener => listener(data))
   }
 
   let currentState: S = initialState
 
   let getState = () => currentState
-  let replaceState: ReplaceState<S, P> = (nextState, data, silent) => {
+  let replaceState: ReplaceState<S> = (nextState, data, silent) => {
     if (data && data.isAsync) {
       // merge currentState and nextState to make sure all state is new
       currentState = {
@@ -59,7 +56,7 @@ const createStore: StoreCreator = <S, P extends Payload, A extends Action<S, P>,
   }
 
   let isDispatching: boolean = false
-  let dispatch: Dispatch<S, P> = (actionType, actionPayload) => {
+  let dispatch: Dispatch<S> = (actionType, actionPayload) => {
     if (isDispatching) {
       throw new Error(`store.dispatch(actionType, actionPayload): handler may not dispatch`)
     }
@@ -76,37 +73,30 @@ const createStore: StoreCreator = <S, P extends Payload, A extends Action<S, P>,
     }
 
     let isAsync: boolean = false
-    let updateState: StateUpdator<S, P> = nextState => {
-      if (_.isFn(nextState)) {
-        return updateState((nextState as NextStateFun<S, P>)(currentState, actionPayload))
-      }
-      if (_.isThenable(nextState)) {
-        isAsync = true
-        return (nextState as NextStatePromise<S, P>).then(updateState)
-      }
+    let updateState: StateUpdator<S> = nextState => {
       if (nextState === currentState) {
         return currentState
       }
 
-      let data: Data<S, P> = {
+      let data: Data<S> = {
         isAsync,
         start,
         end: new Date(),
         actionType,
         actionPayload,
         previousState: currentState,
-        currentState: nextState as S
+        currentState: nextState
       }
 
-      replaceState(nextState as S, data)
+      replaceState(nextState, data)
 
-      return nextState as S
+      return nextState
     }
 
-    return updateState(nextState) as S
+    return updateState(nextState)
   }
 
-  let curryActions: Curring<Record<string, A>, S, P> = Object.keys(actions).reduce((obj, actionType) => {
+  let curryActions: Partial<Curring<S, AS>> = Object.keys(actions).reduce((obj, actionType) => {
     if (_.isFn(actions[actionType])) {
       obj[actionType] = actionPayload => dispatch(actionType, actionPayload)
     }
@@ -114,7 +104,7 @@ const createStore: StoreCreator = <S, P extends Payload, A extends Action<S, P>,
   }, {})
 
 
-  let store: Store<S, P, A> = {
+  let store: Store<S, AS> = {
     actions: curryActions,
     getState,
     replaceState,

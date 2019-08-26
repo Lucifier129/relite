@@ -6,7 +6,7 @@ describe('test-createStore', () => {
 		let store = createStore(actions, { count: 0 })
 
 		store.getState()
-		store.actions.INCREMENT
+		store.actions
 
 		expect(store.getState()).toEqual({ count: 0 })
 	})
@@ -41,19 +41,6 @@ describe('test-createStore', () => {
 		expect(store.getState()).toEqual({ count: 0 })
 	})
 
-	it('should change state by async action', async () => {
-		let store = createStore(actions, { count: 9 })
-
-		await store.actions.INCREMENT_ASYNC()
-		expect(store.getState()).toEqual({ count: 10 })
-
-		await store.dispatch('INCREMENT_ASYNC')
-		expect(store.getState()).toEqual({ count: 11 })
-
-		await store.dispatch('EXEC_BY', -11)
-		expect(store.getState()).toEqual({ count: 0 })
-	})
-
 	it('should trigger listeners after state changed', () => {
 		let store = createStore(actions, { count: 0 })
 		let listener = (data) => {
@@ -85,9 +72,6 @@ describe('test-createStore', () => {
 		store.subscribe(listener)
 
 		store.actions.INCREMENT()
-		expect(listener).toBeCalledTimes(1)
-
-		store.actions.INCREMENT_IF_ODD()
 		expect(listener).toBeCalledTimes(1)
 	})
 

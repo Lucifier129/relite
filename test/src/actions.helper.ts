@@ -8,23 +8,11 @@ export let INCREMENT = (state) => {
   }
 }
 
-export let INCREMENT_ASYNC = async () => {
-  await delay(10)
-  return INCREMENT
-}
-
 export let DECREMENT = (state = { count: 0 }) => {
   let count = state.count - 1
   return {
     ...state,
     count
-  }
-}
-
-export let INCREMENT_IF_ODD = ({ count = 0, ...rest } = {}) => {
-  return count % 2 !== 0 ? INCREMENT : {
-    count,
-    ...rest
   }
 }
 

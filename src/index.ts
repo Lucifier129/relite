@@ -6,18 +6,6 @@
 import $createStore from './createStore'
 import $createLogger from './createLogger'
 
-/** State */
-
-/**
- * State will be the global data storage, it must be object in Relite.
- */
-export interface State {
-  /**
-   * The attribute' key of `state` limited to `string`.
-   */
-  [propName: string]: any
-}
-
 /** Action */
 
 /**
@@ -55,23 +43,14 @@ export type Payload = any
  * 
  * @returns  A new state created just now.
  */
-export interface Action<S extends State = any, P extends Payload = Payload> {
+export interface Action<S extends object, P = any> {
   (
     state: S | undefined,
-    payload?: P
-  ): Action<S, P> | Promise<S | Action<S, P>> | S
-}
-
-/**
- * An `CurryingAction` is a function curried from `action` to call `dispatch`.
- * The `state` in `CurryingAction` is link to the `state` in the `store`.
- */
-export interface CurryingAction<S, P extends Payload = Payload> extends Action {
-  (
     payload?: P
   ): S
 }
 
+export type PayloadFromAction<A> = A extends Action<object, infer S> ? S : A
 
 /** Data */
 
@@ -81,16 +60,16 @@ export interface CurryingAction<S, P extends Payload = Payload> extends Action {
  * It will be used when state will change while `dispatch` or `replaceState`
  * been called.
  */
-export interface Data<S, P extends Payload = Payload> {
+export interface Data<S extends object> {
   /**
    * The identifier of `action` of this change.
    */
-  actionType: Type
+  actionType: string
 
   /**
    * The additional data if this change.
    */
-  actionPayload: P
+  actionPayload: PayloadFromAction<Action<S>>
 
   /**
    * The snapshoot of state before this change. The state that passed into
@@ -121,8 +100,8 @@ export interface Data<S, P extends Payload = Payload> {
 /**
  * An addit of store to add listener which listen the state change.
  */
-export interface Subscribe<S, P extends Payload = Payload> {
-  (listener: Listener<S, P>): () => void
+export interface Subscribe<S extends object> {
+  (listener: Listener<S>): () => void
 }
 
 /**
@@ -130,8 +109,8 @@ export interface Subscribe<S, P extends Payload = Payload> {
  * `subscribe`. The state change information, `Data`, will been passed in
  * when call it.
  */
-export interface Listener<S, P extends Payload = Payload> {
-  (data?: Data<S, P>): any
+export interface Listener<S extends object> {
+  (data?: Data<S>): any
 }
 
 /**
@@ -139,18 +118,18 @@ export interface Listener<S, P extends Payload = Payload> {
  * parameter `Data` passed into listener is it's parameter `Data`. So we
  * do not know if this `Data` really occur.
  */
-export interface Publish<S, P extends Payload = Payload> {
-  (data: Data<S, P>): void
+export interface Publish<S extends object> {
+  (data: Data<S>): void
 }
 
 /**
  * A setter of state which recover previous state forcedly. It may make
  * the state change uncertainly.
  */
-export interface ReplaceState<S, P extends Payload = Payload> {
+export interface ReplaceState<S extends object> {
   (
     nextState: S,
-    data?: Data<S, P>,
+    data?: Data<S>,
     silent?: boolean
   ): void
 }
@@ -160,31 +139,9 @@ export interface ReplaceState<S, P extends Payload = Payload> {
  * new change of state by calling `action` and call `updateState` to
  * change state predictably.
  */
-export interface Dispatch<S,P extends Payload = Payload> {
-  (actionType: Type, actionPayload?: P): S
+export interface Dispatch<S extends object> {
+  (actionType: string, actionPayload?: PayloadFromAction<Action<S>>): S
 }
-
-/**
- * When `action` return a function. It will be a `NextStateFun`.
- */
-export interface NextStateFun<S, P extends Payload = Payload> {
-  (
-    currentState: S,
-    actionPayload?: P
-  ): S
-}
-
-/**
- * When `action` return a promise. It will be a `NextStatePromise`. Get
- * `state` by `await` of `.then()`
- */
-export type NextStatePromise<S, P extends Payload = Payload> = Promise<S | NextStateFun<S, P>>
-
-
-/**
- * `NextState` consist of all type which `action` may return. 
-*/
-export type NextState<S, P extends Payload = Payload> = S | NextStateFun<S, P> | NextStatePromise<S, P>
 
 /**
  * An state updator which get the final next state and call `replaceState`
@@ -195,18 +152,18 @@ export type NextState<S, P extends Payload = Payload> = S | NextStateFun<S, P> |
  * 
  * @returns The next state object.
  */
-export interface StateUpdator<S, P extends Payload = Payload> {
-  (nextState: NextState<S, P>): NextState<S, P>
+export interface StateUpdator<S extends object> {
+  (nextState: S): S
 }
 
 
-export type Curring<T, S, P> = {
-  [K in keyof T]: CurryingAction<S, P>
+export type Curring<S extends object, AS> = {
+  readonly [k in keyof AS]: AS[k] extends Action<S, infer P> ? (p?: P) => S : AS[k]
 }
 /**
  * An object which export all API for change `state` and attach listener.
  */
-export interface Store<S = any, P extends Payload = Payload, A extends Action = Action> {
+export interface Store<S extends object, AS extends Record<string, Action<S>>> {
   /**
    * Contain all caller curring from `action` passed in `createStore` and
    * `dispatch`. Could call dispatch whith mapped `action` type.
@@ -215,14 +172,14 @@ export interface Store<S = any, P extends Payload = Payload, A extends Action = 
    * 
    * @param [payload] Extend from `actionPayload` of 'Action' parameters.
    */
-  actions: Curring<Record<string, Action>, S, P>
+  actions: Partial<Curring<S, AS>>
 
   /**
    * Reads the state tree managed by the store.
    *
    * @returns The current state tree of your application.
    */
-  getState(): S
+  getState(): Readonly<S>
 
   /**
    * Cover the state with the new state and the data passed in. It will
@@ -232,7 +189,7 @@ export interface Store<S = any, P extends Payload = Payload, A extends Action = 
    * 
    * @param nextState It could be a state `object` will be the next state.
    */
-  replaceState: ReplaceState<S, P>
+  replaceState: ReplaceState<S>
   /**
    * Dispatches an action. It is the only way to trigger a state change.
    *
@@ -251,7 +208,7 @@ export interface Store<S = any, P extends Payload = Payload, A extends Action = 
    *
    * @returns For convenience, the next state object you changed to.
    */
-  dispatch: Dispatch<S, P>
+  dispatch: Dispatch<S>
 
   /**
    * Adds a change listener. It will be called any time an action is
@@ -277,14 +234,14 @@ export interface Store<S = any, P extends Payload = Payload, A extends Action = 
    * @param listener A callback to be invoked on every dispatch.
    * @returns A function to remove this change listener.
    */
-  subscribe: Subscribe<S, P>
+  subscribe: Subscribe<S>
 
   /**
    * Broadcast all the listener attached before.
    * 
    * @param data The state change information.
    */
-  publish: Publish<S, P>
+  publish: Publish<S>
 }
 
 export type DeepPartial<T> = {
@@ -301,10 +258,10 @@ export type DeepPartial<T> = {
  * from store creators.
  */
 export interface StoreCreator {
-  <S, P extends Payload, A extends Action<S, P>>(
-    actions: Record<string, A>,
+  <S extends object, AS extends Record<string, Action<S>>>(
+    actions: AS,
     initialState?: DeepPartial<S>
-  ): Store<S, P, A>
+  ): Store<S, AS>
 }
 
 /**
@@ -336,9 +293,9 @@ export const createStore: StoreCreator = $createStore
  * logger creators.
  */
 export interface LoggerCreator {
-  <S, P extends Payload = Payload>(
-    props?: LoggerProps<S, P>
-  ): LogInfo<S, P>
+  <S extends object, A extends Action<S>>(
+    props?: LoggerProps<S, A>
+  ): LogInfo<S, A>
 }
 
 /**
@@ -355,11 +312,11 @@ export const createLogger: LoggerCreator = $createLogger
 /**
  * The arguments of LoggerCreator.
  */
-export interface LoggerProps<S, P extends Payload = Payload> {
+export interface LoggerProps<S extends object, A extends Action<S>> {
   /** the identifier of this logger */
   name?: string
   /** a middleware which will adapt `data` */
-  filter?: Filter<S, P>
+  filter?: Filter<S, A>
 }
 
 /**
@@ -367,8 +324,8 @@ export interface LoggerProps<S, P extends Payload = Payload> {
  * 
  * @param data A record of store state change.
  */
-export interface LogInfo<S, P extends Payload = Payload> {
-  (data: Data<S, P>): void
+export interface LogInfo<S extends object, A extends Action<S>> {
+  (data: Data<S>): void
 }
 
 /**
@@ -378,8 +335,8 @@ export interface LogInfo<S, P extends Payload = Payload> {
  * 
  * @returns The `data` after sorting.
  **/
-export interface Filter<S, P extends Payload = Payload> {
-  (data: Data<S, P>): Data<S, P>
+export interface Filter<S extends object, A extends Action<S>> {
+  (data: Data<S>): Data<S>
 }
 
 /**
