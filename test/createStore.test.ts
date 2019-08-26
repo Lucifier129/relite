@@ -5,6 +5,9 @@ describe('test-createStore', () => {
 	it('should get current state by store.getState', () => {
 		let store = createStore(actions, { count: 0 })
 
+		store.getState()
+		store.actions.INCREMENT
+
 		expect(store.getState()).toEqual({ count: 0 })
 	})
 
