@@ -1,15 +1,16 @@
 /**
- * createStore
+ * createLogger
  */
-import Relite from './index'
+import { Pad, Filter, LoggerCreator, LogInfo, Action } from './index'
 
 const attr: string = typeof console !== 'undefined' && 'info' in console ? 'info' : 'log'
-const pad: Relite.Pad = num => ('0' + num).slice(-2)
-const identity: Relite.Identity = obj => obj
+const pad: Pad = num => ('0' + num).slice(-2)
 
-const createLogger: Relite.CreateLogger = ({ name, filter }) => {
+const createLogger: LoggerCreator = <S extends object>({ name, filter }) => {
+    const identity: Filter<S> = obj => obj 
     filter = typeof filter === 'function' ? filter : identity
-    const logInfo: Relite.LogInfo = (data: Relite.Data) => {
+    
+    let logInfo: LogInfo<S> = data => {
         data = filter(data)
         const {
             actionType,
