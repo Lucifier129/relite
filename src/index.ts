@@ -31,7 +31,7 @@ import $createLogger from './createLogger'
  */
 export interface Action<S extends object, P = any> {
   (
-    state: S | undefined,
+    state: S,
     payload?: P
   ): S
 }
