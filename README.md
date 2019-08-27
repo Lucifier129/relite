@@ -6,6 +6,12 @@ redux is awesome, but is not enough simple for small and middle application.
 
 With `relite`, we don't need to `combine | apply | bind` anything, just write pure function and call actions, it done.
 
+# What's new(3.0.0)
+
++ Supoort `Typescript`.
+
++ Delete the support of return type `Promise | Function` of `Action`.
+
 # Installtion
 
 ```shell
@@ -39,42 +45,6 @@ export let EXEC_BY = (state, input) => {
 	}
 }
 ```
-
-`relite` support async action, works like build-in `redux-promise` and `redux-thunk`
-
-```javascript
-/**
-* when action-handler return a promise, it will call updateState at promise.then
-* use async/await syntax will be better for handling async action
-*/
-export let EXEC_ASYNC = async (state, input) => {
-	await delay(1000)
-	return EXEC_BY(state, input) // use the state accepted by EXEC_ASYNC, it maybe out of time
-}
-
-export let EXEC_ASYNC = async (state, input) => {
-	await delay(1000)
-	return EXEC_BY // use current state
-}
-
-// promise-style
-export let EXEC_ASYNC = (state, input) => {
-	return delay(1000, EXEC_BY)
-}
-
-function delay(timeout = 0, value) {
-    return new Promise(resolve => {
-        setTimeout(() => resolve(value), timeout)
-    })
-}
-```
-
-`relite` support three kinds of action-result: nextState, promise and action-handler
-
-- if action-handler return promise, `relite` call updateState on promise.then
-- if action-handler return function, `relite` handle it as a new action-handler and call it with state and current action-payload
-- other value return by action-handler is named `nextState`, `relite` will call updateState immediately
-- you can nest all of three kinds action-result mentioned above in action-handler
 
 ## create store by actions and initialState
 

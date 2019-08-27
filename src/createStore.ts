@@ -103,7 +103,6 @@ const createStore: StoreCreator = <S extends object, AS extends Record<string, A
     return obj
   }, {})
 
-
   let store: Store<S, AS> = {
     actions: curryActions,
     getState,
