@@ -36,8 +36,12 @@ export interface Action<S extends object, P = any> {
   ): S
 }
 
+/**
+ * The collection of `Action`.
+ * 
+ * @template S The type of state to be held by the store.
+ */
 export type Actions<S extends object> = Record<string, Action<S>>
-
 
 /**
  * In Relite, before actions exported by `store` them must be currying from some
@@ -53,10 +57,19 @@ export type Actions<S extends object> = Record<string, Action<S>>
  * that store will export.
  */
 export type Curring<S extends object, AS> = {
-  readonly [k in keyof AS]: AS[k] extends Action<S, infer P> ? (p?: P) => S : AS[k]
+  readonly [k in keyof AS]: AS[k] extends Action<S, infer P>
+    ? (p?: P) => S : AS[k]
 }
 
-export type CurringActions<S extends object, AS extends Actions<S>> = Partial<Curring<S, AS>>
+/**
+ * The cyrring `Actions`. Each `Action` in this will be optional.
+ * 
+ * @template S The type of state to be held by the store.
+ * @template AS The type of actions consist of `Action`. It will be map to the actions
+ * that store will export.
+ */
+export type CurringActions<S extends object, AS extends Actions<S>>
+  = Partial<Curring<S, AS>>
 
 /**
  * Infer the `Payload` data shape from an `Action`.
