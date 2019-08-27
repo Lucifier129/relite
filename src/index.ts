@@ -36,6 +36,28 @@ export interface Action<S extends object, P = any> {
   ): S
 }
 
+export type Actions<S extends object> = Record<string, Action<S>>
+
+
+/**
+ * In Relite, before actions exported by `store` them must be currying from some
+ * `Action` those looks like `(s: State, p?: Payload) => State` to a `CurryingAction`
+ * that looks like `(p?: Payload) => State` firstly.
+ * 
+ * The actions consist of `Action` need map to the actions consist of `CurringAction`.
+ * 
+ * The code hint of actions and the `Payload` type hint will work after doing this.
+ * 
+ * @template S The type of state to be held by the store.
+ * @template AS The type of actions consist of `Action`. It will be map to the actions
+ * that store will export.
+ */
+export type Curring<S extends object, AS> = {
+  readonly [k in keyof AS]: AS[k] extends Action<S, infer P> ? (p?: P) => S : AS[k]
+}
+
+export type CurringActions<S extends object, AS extends Actions<S>> = Partial<Curring<S, AS>>
+
 /**
  * Infer the `Payload` data shape from an `Action`.
  * 
@@ -165,36 +187,19 @@ export interface StateUpdator<S extends object> {
 }
 
 /**
- * In Relite, before actions exported by `store` them must be currying from some
- * `Action` those looks like `(s: State, p?: Payload) => State` to a `CurryingAction`
- * that looks like `(p?: Payload) => State` firstly.
- * 
- * The actions consist of `Action` need map to the actions consist of `CurringAction`.
- * 
- * The code hint of actions and the `Payload` type hint will work after doing this.
- * 
- * @template S The type of state to be held by the store.
- * @template AS The type of actions consist of `Action`. It will be map to the actions
- * that store will export.
- */
-export type Curring<S extends object, AS> = {
-  readonly [k in keyof AS]: AS[k] extends Action<S, infer P> ? (p?: P) => S : AS[k]
-}
-
-/**
  * An object which export all API for change `state` and attach listener.
  * 
  * @template S The type of state to be held by the store.
  * @template AS The type of actions consist of `Action`.
  */
-export interface Store<S extends object, AS extends Record<string, Action<S>>> {
+export interface Store<S extends object, AS extends Actions<S>> {
   /**
    * Contain all caller curring from `Action` passed in `createStore` and
    * `dispatch`. Could call dispatch whith mapped `Action` type.
    * 
    * CurryingAction
    */
-  actions: Partial<Curring<S, AS>>
+  actions: CurringActions<S, AS>
 
   /**
    * Reads the state tree managed by the store.
@@ -285,7 +290,7 @@ export type DeepPartial<T> = {
  * @template AS The type of actions those may be call by dispatch.
  */
 export interface StoreCreator {
-  <S extends object, AS extends Record<string, Action<S>>>(
+  <S extends object, AS extends Actions<S>>(
     actions: AS,
     initialState?: DeepPartial<S>
   ): Store<S, AS>
