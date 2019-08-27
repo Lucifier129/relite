@@ -9,7 +9,8 @@ import {
   StateUpdator,
   Data,
   Action,
-  Curring
+  Curring,
+  CurringActions
 } from './index'
 
 import * as _ from './util'
@@ -96,7 +97,7 @@ const createStore: StoreCreator = <S extends object, AS extends Record<string, A
     return updateState(nextState)
   }
 
-  let curryActions: Partial<Curring<S, AS>> = Object.keys(actions).reduce((obj, actionType) => {
+  let curryActions: CurringActions<S, AS> = Object.keys(actions).reduce((obj, actionType) => {
     if (_.isFn(actions[actionType])) {
       obj[actionType] = actionPayload => dispatch(actionType, actionPayload)
     }
