@@ -1,4 +1,4 @@
-import { createStore } from '../src/index'
+import { createStore, Action } from '../src/index'
 import * as actions from './src/actions.helper'
 
 describe('test-createStore', () => {
@@ -83,6 +83,23 @@ describe('test-createStore', () => {
 		unsubscribe()
 		store.actions.INCREMENT()
 		expect(listener).toBeCalledTimes(1)
+	})
+
+	it('state type is correct', () => {
+		type ObjectAlias = object;
+
+		interface State extends ObjectAlias {
+			location?: object
+		}
+
+		let state: State = {}
+
+		const IIIII: Action<State> = (state) => state
+		let actions = {
+			IIIII
+		}
+
+		createStore(actions, state)
 	})
 
 })

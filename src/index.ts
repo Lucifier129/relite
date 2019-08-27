@@ -286,10 +286,6 @@ export interface Store<S extends object, AS extends Actions<S>> {
   publish: Publish<S>
 }
 
-export type DeepPartial<T> = {
-  [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K]
-}
-
 /**
  * A *StoreCreator* can create a global Relite store that hold the state tree, 
  * state, and also create getter and setter, `dispatch` and currying `actions`, 
@@ -305,7 +301,7 @@ export type DeepPartial<T> = {
 export interface StoreCreator {
   <S extends object, AS extends Actions<S>>(
     actions: AS,
-    initialState?: DeepPartial<S>
+    initialState?: S
   ): Store<S, AS>
 }
 
