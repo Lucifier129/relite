@@ -382,7 +382,7 @@ export interface LogInfo<S extends object> {
  * @param data The `data` before sorting.
  * 
  * @returns The `data` after sorting.
- **/
+ */
 export interface Filter<S extends object> {
   (data: Data<S>): Data<S>
 }

@@ -1,4 +1,4 @@
-import { createStore, Action } from '../src/index'
+import { createStore, createLogger, Action } from '../src/index'
 import * as actions from './src/actions.helper'
 
 describe('test-createStore', () => {
@@ -102,4 +102,9 @@ describe('test-createStore', () => {
 		createStore(actions, state)
 	})
 
+	it('listener should not been called after unsubscribe', () => {
+		let store = createStore(actions, { count: 1, test: 1 })
+
+		
+	})
 })
