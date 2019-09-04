@@ -9,31 +9,6 @@ import $createLogger from "./createLogger"
 /** Action */
 
 /**
- * The Action should be a function with two argements and return something.
- */
-export type UnionToIntersection<U> = (U extends any
-  ? (k: U) => void
-  : never) extends ((k: infer I) => void)
-  ? I
-  : never
-
-export type UnionStateFromAS<AS> = {
-  [K in keyof AS]: AS[K] extends AnyAction
-    ? ReturnType<AS[K]> & number extends ReturnType<AS[K]> & string
-      ? {}
-      : ReturnType<AS[K]>
-    : {}
-}[keyof AS]
-
-export type StateFromAS<AS> = UnionToIntersection<UnionStateFromAS<AS>>
-
-export type StandardActions<S extends object, AS> = {
-  [K in keyof AS]: AS[K] extends Action<S, PayloadFromAction<AS[K]>>
-    ? AS[K]
-    : AnyAction
-}
-
-/**
  * A function looks like a reducer of redux, but more simple and powerful.
  *
  * An `Action` consist of `Action` type, `Action` payload, `Action` handler
@@ -46,32 +21,115 @@ export type StandardActions<S extends object, AS> = {
  *
  * @template S The type of state to be held by the store.
  * @template P The type of `Payload` that used to change the state as a assist.
+ * @template RS The type of state that the action returns.
  *
  * @param state A snapshoot of current state. Will create new state based
  * on it.
  * @param [payload] Some useful data help to create new state. So we can
  * set it optionally.
  *
- * @returns  A new state created just now.
+ * @returns A new state created just now.
  */
-
 export interface AnyAction<S extends object = {}, P = unknown, RS = unknown> {
   (state: S, payload: P): RS
 }
 
+/**
+ * The standard `Action`
+ * 
+ * Pass in `object` type state and payload, return `object` type state.
+ * 
+ * @template S Store state type.
+ * @template P Payload type.
+ */
 export type Action<S extends object, P = unknown> = AnyAction<S, P, S>
 
+/**
+ * Curring Action
+ * 
+ * There are three type Action after curring.
+ */
+
+ /**
+  * `CurringAction` only return new store state.
+  * 
+  * @template S Store state type.
+  */
 export interface CurringAction<S extends object> {
   (): S
 }
 
-export interface CurringActionWithPreload<S extends object, P> {
-  (p: P): S
+ /**
+  * `CurringActionWithPayload` has one argument `Payload` certainly and
+  * return new store state.
+  * 
+  * @template S Store state type.
+  * @template P Payload type.
+  * 
+  * @param payload
+  */
+export interface CurringActionWithPayload<S extends object, P> {
+  (payload: P): S
 }
 
-export interface CurringActionWithPreloadOptional<S extends object, P> {
-  (p?: P): S
+/**
+ * `CurringActionWithPayloadOptional` has one argument `Payload` optionally
+ * and return new store state.
+ * 
+ * @template S Store state type
+ * @template P Payload type
+ * 
+ * @param [payload]
+ */
+export interface CurringActionWithPayloadOptional<S extends object, P> {
+  (payload?: P): S
 }
+
+/**
+ * Transiform *Union* type to *Intersection* type
+ * 
+ * string | number => string & number
+ * 
+ * @template U The input *Union* type
+ */
+export type UnionToIntersection<U> = (U extends any
+  ? (k: U) => void
+  : never) extends ((k: infer I) => void)
+    ? I
+    : never
+
+/**
+ * Get return type of `Action`
+ * 
+ * Filter {`any`, `unknown`} => Filter Exclude{`object`} => `object`
+ * 
+ * @template A The input `Action` type
+ */
+export type StateFromAction<A> = A extends AnyAction
+  ? unknown extends ReturnType<A>
+    ? {}
+    : ReturnType<A> extends object
+      ? ReturnType<A>
+      : {}
+  : {}
+
+/**
+ * Get *Union* type of states from `Actions`
+ * 
+ * Action[] => [*Union* ReturnType<Action>]
+ * 
+ * @template AS The input `Actions` type
+ */
+export type UnionStateFromAS<AS> = {
+  [K in keyof AS]: StateFromAction<AS[K]>
+}[keyof AS]
+
+/**
+ * Get *Intersection* type of states from `Actions`
+ * 
+ * @template AS The input `Actions` type
+ */
+export type StateFromAS<AS> = UnionToIntersection<UnionStateFromAS<AS>>
 
 /**
  * The collection of `Action`.
@@ -88,45 +146,29 @@ export type Actions<S extends object> = Record<string, AnyAction<S>>
  * The actions consist of `Action` need map to the actions consist of `CurringAction`.
  *
  * The code hint of actions and the `Payload` type hint will work after doing this.
+ * 
+ * The progress is 
+ * [state, payload?] = [state] + [state, payload]
+ * match [state, payload]
+ * match [state]
+ * otherwise is [state, payload?]
  *
  * @template S The type of state to be held by the store.
  * @template AS The type of actions consist of `Action`. It will be map to the actions
  * that store will export.
  */
-// export type Curring<S extends object, A> = A extends AnyAction<S, infer P>
-//   ? P extends string | number | boolean | object | undefined | null
-//   ? Exclude<P, undefined> extends unknown
-//   ? CurringActionWithPreload<S, P>
-//   : CurringActionWithPreloadOptional<S, P>
-//   : CurringAction<S>
-//   : AnyAction<S>
-
-type Diff<T, U> = T extends U ? never : T
-
-type A = (state: object, p?: string) => object
-
-// type B<A> = A extends ((s: object, p: infer Payload) => object) ? Payload : '123'
-
-type B<A> = A extends ((...args: infer ARGS) => object) ? ARGS : "123"
-
-type Args<F> = F extends ((...args: infer ARGS) => any) ? ARGS : never
-
-type Arg1<F> = F extends ((arg0, arg1: infer ARG1) => any) ? ARG1 : never
-
-/**
- * [state, payload?] = [state] + [state, payload]
- * match [state, payload]
- * match [state]
- * otherwise is [state, payload?]
- */
 export type Curring<
   State extends object,
   Action extends AnyAction<State>
 > = Args<Action> extends [object, any]
-  ? CurringActionWithPreload<State, Arg1<Action>>
+  ? CurringActionWithPayload<State, Arg1<Action>>
   : Args<Action> extends [object]
     ? CurringAction<State>
-    : CurringActionWithPreloadOptional<State, Arg1<Action>>
+    : CurringActionWithPayloadOptional<State, Arg1<Action>>
+
+type Args<F> = F extends ((...args: infer ARGS) => any) ? ARGS : never
+
+type Arg1<F> = F extends ((arg0, arg1: infer ARG1) => any) ? ARG1 : never
 
 /**
  * The cyrring `Actions`. Each `Action` in this will be optional.
