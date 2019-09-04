@@ -3,10 +3,35 @@
  *
  * A redux-like library for managing state with simpler api.
  */
-import $createStore from "./createStore";
-import $createLogger from "./createLogger";
+import $createStore from "./createStore"
+import $createLogger from "./createLogger"
 
 /** Action */
+
+/**
+ * The Action should be a function with two argements and return something.
+ */
+export type UnionToIntersection<U> = (U extends any
+  ? (k: U) => void
+  : never) extends ((k: infer I) => void)
+  ? I
+  : never
+
+export type UnionStateFromAS<AS> = {
+  [K in keyof AS]: AS[K] extends AnyAction
+    ? ReturnType<AS[K]> & number extends ReturnType<AS[K]> & string
+      ? {}
+      : ReturnType<AS[K]>
+    : {}
+}[keyof AS]
+
+export type StateFromAS<AS> = UnionToIntersection<UnionStateFromAS<AS>>
+
+export type StandardActions<S extends object, AS> = {
+  [K in keyof AS]: AS[K] extends Action<S, PayloadFromAction<AS[K]>>
+    ? AS[K]
+    : AnyAction
+}
 
 /**
  * A function looks like a reducer of redux, but more simple and powerful.
@@ -29,8 +54,23 @@ import $createLogger from "./createLogger";
  *
  * @returns  A new state created just now.
  */
-export interface Action<S extends object, P = any> {
-  (state: S, payload?: P): S;
+
+export interface AnyAction<S extends object = {}, P = unknown, RS = unknown> {
+  (state: S, payload: P): RS
+}
+
+export type Action<S extends object, P = unknown> = AnyAction<S, P, S>
+
+export interface CurringAction<S extends object> {
+  (): S
+}
+
+export interface CurringActionWithPreload<S extends object, P> {
+  (p: P): S
+}
+
+export interface CurringActionWithPreloadOptional<S extends object, P> {
+  (p?: P): S
 }
 
 /**
@@ -38,7 +78,7 @@ export interface Action<S extends object, P = any> {
  *
  * @template S The type of state to be held by the store.
  */
-export type Actions<S extends object> = Record<string, Action<S>>;
+export type Actions<S extends object> = Record<string, AnyAction<S>>
 
 /**
  * In Relite, before actions exported by `store` them must be currying from some
@@ -53,11 +93,40 @@ export type Actions<S extends object> = Record<string, Action<S>>;
  * @template AS The type of actions consist of `Action`. It will be map to the actions
  * that store will export.
  */
-export type Curring<S extends object, AS> = {
-  readonly [k in keyof AS]: AS[k] extends Action<S, infer P>
-    ? (p?: P) => S
-    : AS[k];
-};
+// export type Curring<S extends object, A> = A extends AnyAction<S, infer P>
+//   ? P extends string | number | boolean | object | undefined | null
+//   ? Exclude<P, undefined> extends unknown
+//   ? CurringActionWithPreload<S, P>
+//   : CurringActionWithPreloadOptional<S, P>
+//   : CurringAction<S>
+//   : AnyAction<S>
+
+type Diff<T, U> = T extends U ? never : T
+
+type A = (state: object, p?: string) => object
+
+// type B<A> = A extends ((s: object, p: infer Payload) => object) ? Payload : '123'
+
+type B<A> = A extends ((...args: infer ARGS) => object) ? ARGS : "123"
+
+type Args<F> = F extends ((...args: infer ARGS) => any) ? ARGS : never
+
+type Arg1<F> = F extends ((arg0, arg1: infer ARG1) => any) ? ARG1 : never
+
+/**
+ * [state, payload?] = [state] + [state, payload]
+ * match [state, payload]
+ * match [state]
+ * otherwise is [state, payload?]
+ */
+export type Curring<
+  State extends object,
+  Action extends AnyAction<State>
+> = Args<Action> extends [object, any]
+  ? CurringActionWithPreload<State, Arg1<Action>>
+  : Args<Action> extends [object]
+    ? CurringAction<State>
+    : CurringActionWithPreloadOptional<State, Arg1<Action>>
 
 /**
  * The cyrring `Actions`. Each `Action` in this will be optional.
@@ -66,16 +135,16 @@ export type Curring<S extends object, AS> = {
  * @template AS The type of actions consist of `Action`. It will be map to the actions
  * that store will export.
  */
-export type CurringActions<S extends object, AS extends Actions<S>> = Partial<
-  Curring<S, AS>
->;
+export type Currings<S extends object, AS extends Actions<S>> = {
+  readonly [k in keyof AS]: Curring<S, AS[k]>
+}
 
 /**
  * Infer the `Payload` data shape from an `Action`.
  *
  * @template A The type of `Action` which we want to infer from.
  */
-export type PayloadFromAction<A> = A extends Action<object, infer P> ? P : A;
+export type PayloadFromAction<A> = A extends Action<object, infer P> ? P : A
 
 /** Data */
 
@@ -91,36 +160,36 @@ export interface Data<S extends object> {
   /**
    * The identifier `actionType` of `Action` of this change.
    */
-  actionType: string;
+  actionType: string
 
   /**
    * The additional `Payload` data of a change from the `Action` of this
    * change.
    */
-  actionPayload: PayloadFromAction<Action<S>>;
+  actionPayload: PayloadFromAction<Action<S>>
 
   /**
    * The snapshoot of state before this change. The state that passed into
    * `Action`.
    */
-  previousState: S;
+  previousState: S
   /**
    * The state will be after this change. The state that returned from
    * `Action`.
    */
-  currentState: S;
+  currentState: S
   /**
    * The start time of this change occur.
    */
-  start: Date;
+  start: Date
   /**
    * The finished time of this change occur.
    */
-  end: Date;
+  end: Date
   /**
    * If the result of `Action` is a Promise.
    */
-  isAsync: boolean;
+  isAsync: boolean
 }
 
 /** Store */
@@ -131,7 +200,7 @@ export interface Data<S extends object> {
  * @template S The type of state to be held by the store.
  */
 export interface Subscribe<S extends object> {
-  (listener: Listener<S>): () => void;
+  (listener: Listener<S>): () => void
 }
 
 /**
@@ -145,7 +214,7 @@ export interface Subscribe<S extends object> {
  * been called by `dispatch()`.
  */
 export interface Listener<S extends object> {
-  (data?: Data<S>): any;
+  (data?: Data<S>): any
 }
 
 /**
@@ -156,7 +225,7 @@ export interface Listener<S extends object> {
  * @template S The type of state to be held by the store.
  */
 export interface Publish<S extends object> {
-  (data: Data<S>): void;
+  (data: Data<S>): void
 }
 
 /**
@@ -166,7 +235,7 @@ export interface Publish<S extends object> {
  * @template S The type of state to be held by the store.
  */
 export interface ReplaceState<S extends object> {
-  (nextState: S, data?: Data<S>, silent?: boolean): void;
+  (nextState: S, data?: Data<S>, silent?: boolean): void
 }
 
 /**
@@ -177,7 +246,7 @@ export interface ReplaceState<S extends object> {
  * @template S The type of state to be held by the store.
  */
 export interface Dispatch<S extends object> {
-  (actionType: string, actionPayload?: PayloadFromAction<Action<S>>): S;
+  (actionType: string, actionPayload?: PayloadFromAction<Action<S>>): S
 }
 
 /**
@@ -191,7 +260,7 @@ export interface Dispatch<S extends object> {
  * @returns The next state object.
  */
 export interface StateUpdator<S extends object> {
-  (nextState: S): S;
+  (nextState: S): S
 }
 
 /**
@@ -207,14 +276,14 @@ export interface Store<S extends object, AS extends Actions<S>> {
    *
    * CurryingAction
    */
-  actions: CurringActions<S, AS>;
+  actions: Partial<Currings<S, AS>>
 
   /**
    * Reads the state tree managed by the store.
    *
    * @returns The current state tree of your application that just can read.
    */
-  getState(): Readonly<S>;
+  getState(): S
 
   /**
    * Cover the state with the new state and the data passed in. It will
@@ -225,7 +294,7 @@ export interface Store<S extends object, AS extends Actions<S>> {
    * @param [silent] The signature indicate if we need to `publish()`. `true`
    * indicate not. `false` indicate yes. Default value is `false`.
    */
-  replaceState: ReplaceState<S>;
+  replaceState: ReplaceState<S>
   /**
    * Dispatches an Action. It is the only way to trigger a state change.
    *
@@ -243,7 +312,7 @@ export interface Store<S extends object, AS extends Actions<S>> {
    *
    * @returns For convenience, the next state object you changed to.
    */
-  dispatch: Dispatch<S>;
+  dispatch: Dispatch<S>
 
   /**
    * Adds a change listener. It will be called any time an Action is
@@ -270,7 +339,7 @@ export interface Store<S extends object, AS extends Actions<S>> {
    *
    * @returns `unsubscribe` A function to remove this listener.
    */
-  subscribe: Subscribe<S>;
+  subscribe: Subscribe<S>
 
   /**
    * Broadcast all the listener attached before.
@@ -278,7 +347,7 @@ export interface Store<S extends object, AS extends Actions<S>> {
    * @param data The state change information.The data object that need to
    * pass in all `Listener`.
    */
-  publish: Publish<S>;
+  publish: Publish<S>
 }
 
 /**
@@ -294,10 +363,10 @@ export interface Store<S extends object, AS extends Actions<S>> {
  * @template AS The type of actions those may be call by dispatch.
  */
 export interface StoreCreator {
-  <S extends object, AS extends Actions<S>>(
+  <S extends object, AS extends Actions<S & StateFromAS<AS>>>(
     actions: AS,
     initialState?: S
-  ): Store<S, AS>;
+  ): Store<S & StateFromAS<AS>, AS>
 }
 
 /**
@@ -316,7 +385,7 @@ export interface StoreCreator {
  * currying, the getter of state, `getState`, and the subscribe API,
  * `subscribe` and `publish`.
  */
-export const createStore: StoreCreator = $createStore;
+export const createStore: StoreCreator = $createStore
 
 /** Logger */
 
@@ -330,7 +399,7 @@ export const createStore: StoreCreator = $createStore;
  * @template S The type of state to be held by the store.
  */
 export interface LoggerCreator {
-  <S extends object>(props?: LoggerProps<S>): LogInfo<S>;
+  <S extends object>(props?: LoggerProps<S>): LogInfo<S>
 }
 
 /**
@@ -342,7 +411,7 @@ export interface LoggerCreator {
  *
  * @returns A listener to record store state changed.
  */
-export const createLogger: LoggerCreator = $createLogger;
+export const createLogger: LoggerCreator = $createLogger
 
 /**
  * The arguments of LoggerCreator.
@@ -351,9 +420,9 @@ export const createLogger: LoggerCreator = $createLogger;
  */
 export interface LoggerProps<S extends object> {
   /** the identifier of this logger */
-  name?: string;
+  name?: string
   /** a middleware which will adapt `data` */
-  filter?: Filter<S>;
+  filter?: Filter<S>
 }
 
 /**
@@ -364,7 +433,7 @@ export interface LoggerProps<S extends object> {
  * @param data A record of store state change.
  */
 export interface LogInfo<S extends object> {
-  (data: Data<S>): void;
+  (data: Data<S>): void
 }
 
 /**
@@ -377,12 +446,12 @@ export interface LogInfo<S extends object> {
  * @returns The `data` after sorting.
  */
 export interface Filter<S extends object> {
-  (data: Data<S>): Data<S>;
+  (data: Data<S>): Data<S>
 }
 
 /**
  * A time string formatter.
  */
 export interface Pad {
-  (num: number): string;
+  (num: number): string
 }

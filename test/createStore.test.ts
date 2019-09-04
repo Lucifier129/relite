@@ -2,11 +2,12 @@ import { createStore, Action, Actions } from "../src/index";
 import * as actions from "./src/actions.helper";
 import * as errorAction from "./src/actions.error";
 import * as changeAction from "./src/actions.change";
+import * as anyActions from './src/actions.any'
 
 describe("test-createStore", () => {
   it("actions should be object", () => {
     try {
-      createStore(undefined as Actions<{}>);
+      createStore(undefined as Actions<Action<{}>>);
     } catch (e) {
       expect((e as Error).message).toMatch(
         "Expected first argument to be an object"
@@ -178,4 +179,10 @@ describe("test-createStore", () => {
 
     expect(listener).toBeCalledTimes(1);
   });
+
+  it("defense `any` type", () => {
+    let store = createStore(anyActions, { count: 1 })
+    store.getState()
+    store.actions.Payload()
+  })
 });

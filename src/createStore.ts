@@ -8,8 +8,9 @@ import {
   Dispatch,
   StateUpdator,
   Data,
-  Action,
-  CurringActions
+  Actions,
+  StateFromAS,
+  Currings
 } from "./index";
 
 import * as _ from "./util";
@@ -19,7 +20,7 @@ import * as _ from "./util";
  */
 const createStore: StoreCreator = <
   S extends object,
-  AS extends Record<string, Action<S>>
+  AS extends Actions<S & StateFromAS<AS>>
 >(
   actions,
   initialState
@@ -100,7 +101,7 @@ const createStore: StoreCreator = <
     return updateState(nextState);
   };
 
-  let curryActions: CurringActions<S, AS> = Object.keys(actions).reduce(
+  let curryActions: Partial<Currings<S, AS>> = Object.keys(actions).reduce(
     (obj, actionType) => {
       if (_.isFn(actions[actionType])) {
         obj[actionType] = actionPayload => dispatch(actionType, actionPayload);
