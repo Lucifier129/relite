@@ -1,79 +1,189 @@
 /**
  * relite
- * 
+ *
  * A redux-like library for managing state with simpler api.
  */
-import $createStore from './createStore'
-import $createLogger from './createLogger'
+import $createStore from "./createStore"
+import $createLogger from "./createLogger"
 
 /** Action */
 
 /**
  * A function looks like a reducer of redux, but more simple and powerful.
- * 
+ *
  * An `Action` consist of `Action` type, `Action` payload, `Action` handler
  * and `Action` result. `Action` type is the identifier of this function.
- * `Action` handler is the body of this function. `Action` result is the 
+ * `Action` handler is the body of this function. `Action` result is the
  * result of function.
- * 
+ *
  * In each `Action`, change the attribute needed and retain another attribute.
  * Suggest to use `...state` accomplish it.
- * 
+ *
  * @template S The type of state to be held by the store.
  * @template P The type of `Payload` that used to change the state as a assist.
- * 
+ * @template RS The type of state that the action returns.
+ *
  * @param state A snapshoot of current state. Will create new state based
  * on it.
  * @param [payload] Some useful data help to create new state. So we can
  * set it optionally.
- * 
- * @returns  A new state created just now.
+ *
+ * @returns A new state created just now.
  */
-export interface Action<S extends object, P = any> {
-  (
-    state: S | undefined,
-    payload?: P
-  ): S
+export interface AnyAction<S extends object = {}, P = unknown, RS = unknown> {
+  (state: S, payload: P): RS
 }
 
 /**
- * The collection of `Action`.
+ * The standard `Action`
  * 
+ * Pass in `object` type state and payload, return `object` type state.
+ * 
+ * @template S Store state type.
+ * @template P Payload type.
+ */
+export type Action<S extends object, P = unknown> = AnyAction<S, P, S>
+
+/**
+ * Curring Action
+ * 
+ * There are three type Action after curring.
+ */
+
+ /**
+  * `CurringAction` only return new store state.
+  * 
+  * @template S Store state type.
+  */
+export interface CurringAction<S extends object> {
+  (): S
+}
+
+ /**
+  * `CurringActionWithPayload` has one argument `Payload` certainly and
+  * return new store state.
+  * 
+  * @template S Store state type.
+  * @template P Payload type.
+  * 
+  * @param payload
+  */
+export interface CurringActionWithPayload<S extends object, P> {
+  (payload: P): S
+}
+
+/**
+ * `CurringActionWithPayloadOptional` has one argument `Payload` optionally
+ * and return new store state.
+ * 
+ * @template S Store state type
+ * @template P Payload type
+ * 
+ * @param [payload]
+ */
+export interface CurringActionWithPayloadOptional<S extends object, P> {
+  (payload?: P): S
+}
+
+/**
+ * Transiform *Union* type to *Intersection* type
+ * 
+ * string | number => string & number
+ * 
+ * @template U The input *Union* type
+ */
+export type UnionToIntersection<U> = (U extends any
+  ? (k: U) => void
+  : never) extends ((k: infer I) => void)
+    ? I
+    : never
+
+/**
+ * Get return type of `Action`
+ * 
+ * Filter {`any`, `unknown`} => Filter Exclude{`object`} => `object`
+ * 
+ * @template A The input `Action` type
+ */
+export type StateFromAction<A> = A extends AnyAction
+  ? unknown extends ReturnType<A>
+    ? {}
+    : ReturnType<A> extends object
+      ? ReturnType<A>
+      : {}
+  : {}
+
+/**
+ * Get *Union* type of states from `Actions`
+ * 
+ * Action[] => [*Union* ReturnType<Action>]
+ * 
+ * @template AS The input `Actions` type
+ */
+export type UnionStateFromAS<AS> = {
+  [K in keyof AS]: StateFromAction<AS[K]>
+}[keyof AS]
+
+/**
+ * Get *Intersection* type of states from `Actions`
+ * 
+ * @template AS The input `Actions` type
+ */
+export type StateFromAS<AS> = UnionToIntersection<UnionStateFromAS<AS>>
+
+/**
+ * The collection of `Action`.
+ *
  * @template S The type of state to be held by the store.
  */
-export type Actions<S extends object> = Record<string, Action<S>>
+export type Actions<S extends object> = Record<string, AnyAction<S>>
 
 /**
  * In Relite, before actions exported by `store` them must be currying from some
  * `Action` those looks like `(s: State, p?: Payload) => State` to a `CurryingAction`
  * that looks like `(p?: Payload) => State` firstly.
- * 
+ *
  * The actions consist of `Action` need map to the actions consist of `CurringAction`.
- * 
+ *
  * The code hint of actions and the `Payload` type hint will work after doing this.
  * 
+ * The progress is 
+ * [state, payload?] = [state] + [state, payload]
+ * match [state, payload]
+ * match [state]
+ * otherwise is [state, payload?]
+ *
  * @template S The type of state to be held by the store.
  * @template AS The type of actions consist of `Action`. It will be map to the actions
  * that store will export.
  */
-export type Curring<S extends object, AS> = {
-  readonly [k in keyof AS]: AS[k] extends Action<S, infer P>
-    ? (p?: P) => S : AS[k]
-}
+export type Curring<
+  State extends object,
+  Action extends AnyAction<State>
+> = Args<Action> extends [object, any]
+  ? CurringActionWithPayload<State, Arg1<Action>>
+  : Args<Action> extends [object]
+    ? CurringAction<State>
+    : CurringActionWithPayloadOptional<State, Arg1<Action>>
+
+type Args<F> = F extends ((...args: infer ARGS) => any) ? ARGS : never
+
+type Arg1<F> = F extends ((arg0, arg1: infer ARG1) => any) ? ARG1 : never
 
 /**
  * The cyrring `Actions`. Each `Action` in this will be optional.
- * 
+ *
  * @template S The type of state to be held by the store.
  * @template AS The type of actions consist of `Action`. It will be map to the actions
  * that store will export.
  */
-export type CurringActions<S extends object, AS extends Actions<S>>
-  = Partial<Curring<S, AS>>
+export type Currings<S extends object, AS extends Actions<S>> = {
+  readonly [k in keyof AS]: Curring<S, AS[k]>
+}
 
 /**
  * Infer the `Payload` data shape from an `Action`.
- * 
+ *
  * @template A The type of `Action` which we want to infer from.
  */
 export type PayloadFromAction<A> = A extends Action<object, infer P> ? P : A
@@ -82,10 +192,10 @@ export type PayloadFromAction<A> = A extends Action<object, infer P> ? P : A
 
 /**
  * A object that record all information of once change of state.
- * 
+ *
  * It will be used when state will change while `dispatch()` or
  * `replaceState()` been called.
- * 
+ *
  * @template S The type of state to be held by the store.
  */
 export interface Data<S extends object> {
@@ -106,7 +216,7 @@ export interface Data<S extends object> {
    */
   previousState: S
   /**
-   * The state will be after this change. The state that returned from 
+   * The state will be after this change. The state that returned from
    * `Action`.
    */
   currentState: S
@@ -128,7 +238,7 @@ export interface Data<S extends object> {
 
 /**
  * An addit of store to add listener which listen the state change.
- * 
+ *
  * @template S The type of state to be held by the store.
  */
 export interface Subscribe<S extends object> {
@@ -139,9 +249,9 @@ export interface Subscribe<S extends object> {
  * An callback will been called when state has changed which has been add by
  * `subscribe()`. The state change information, `Data`, will been passed in
  * when call it.
- * 
+ *
  * @template S The type of state to be held by the store.
- * 
+ *
  * @param [data] The data object that record the change of once `Action` has
  * been called by `dispatch()`.
  */
@@ -153,7 +263,7 @@ export interface Listener<S extends object> {
  * An broadcast function which will call all listener added before. The
  * parameter `Data` passed into listener is it's parameter `Data`. So we
  * do not know if this `Data` really occur.
- * 
+ *
  * @template S The type of state to be held by the store.
  */
 export interface Publish<S extends object> {
@@ -163,22 +273,18 @@ export interface Publish<S extends object> {
 /**
  * A setter of state which recover previous state forcedly. It may make
  * the state change uncertainly.
- * 
+ *
  * @template S The type of state to be held by the store.
  */
 export interface ReplaceState<S extends object> {
-  (
-    nextState: S,
-    data?: Data<S>,
-    silent?: boolean
-  ): void
+  (nextState: S, data?: Data<S>, silent?: boolean): void
 }
 
 /**
  * A dispatcher that construct a new `Data` which record information of
  * new change of state by calling `Action` and call `updateState()` to
  * change state predictably.
- * 
+ *
  * @template S The type of state to be held by the store.
  */
 export interface Dispatch<S extends object> {
@@ -188,11 +294,11 @@ export interface Dispatch<S extends object> {
 /**
  * An state updator which get the final next state and call `replaceState()`
  * to change state.
- * 
+ *
  * @template S The type of state to be held by the store.
- * 
+ *
  * @param nextState all type which `Action` may return a state.
- * 
+ *
  * @returns The next state object.
  */
 export interface StateUpdator<S extends object> {
@@ -201,7 +307,7 @@ export interface StateUpdator<S extends object> {
 
 /**
  * An object which export all API for change `state` and attach listener.
- * 
+ *
  * @template S The type of state to be held by the store.
  * @template AS The type of actions consist of `Action`.
  */
@@ -209,22 +315,22 @@ export interface Store<S extends object, AS extends Actions<S>> {
   /**
    * Contain all caller curring from `Action` passed in `createStore` and
    * `dispatch`. Could call dispatch whith mapped `Action` type.
-   * 
+   *
    * CurryingAction
    */
-  actions: CurringActions<S, AS>
+  actions: Partial<Currings<S, AS>>
 
   /**
    * Reads the state tree managed by the store.
    *
    * @returns The current state tree of your application that just can read.
    */
-  getState(): Readonly<S>
+  getState(): S
 
   /**
    * Cover the state with the new state and the data passed in. It will
    * change the state unpredictably called by user directly.
-   * 
+   *
    * @param nextState It could be a state `object` will be the next state.
    * @param [data] The object that record al information of current change.
    * @param [silent] The signature indicate if we need to `publish()`. `true`
@@ -239,7 +345,7 @@ export interface Store<S extends object, AS extends Actions<S>> {
    * to dispatch a Promise, you need pass in a Promise `Action`.
    *
    * @param actionType A plain string that is the identifier of an `Action`
-   * which representing “what changed”. It is a good idea to keep actions 
+   * which representing “what changed”. It is a good idea to keep actions
    * serializable so you can record and replay user sessions, or use the time
    * travelling `redux-devtools`. It is a requirement to use string constants
    * for Action types.
@@ -272,56 +378,52 @@ export interface Store<S extends object, AS extends Actions<S>> {
    * state by the time it exits.
    *
    * @param listener A callback to be invoked on every dispatch.
-   * 
+   *
    * @returns `unsubscribe` A function to remove this listener.
    */
   subscribe: Subscribe<S>
 
   /**
    * Broadcast all the listener attached before.
-   * 
+   *
    * @param data The state change information.The data object that need to
    * pass in all `Listener`.
    */
   publish: Publish<S>
 }
 
-export type DeepPartial<T> = {
-  [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K]
-}
-
 /**
- * A *StoreCreator* can create a global Relite store that hold the state tree, 
- * state, and also create getter and setter, `dispatch` and currying `actions`, 
+ * A *StoreCreator* can create a global Relite store that hold the state tree,
+ * state, and also create getter and setter, `dispatch` and currying `actions`,
  * of it with `actions` and initialState. It support subscribe changes of state
  * implements with Observer design pattern.
- * 
+ *
  * `createStore(reducer, preloadedState)` exported from the Relite package,
  * from store creators.
- * 
+ *
  * @template S The type of state to be held by the store.
  * @template AS The type of actions those may be call by dispatch.
  */
 export interface StoreCreator {
-  <S extends object, AS extends Actions<S>>(
+  <S extends object, AS extends Actions<S & StateFromAS<AS>>>(
     actions: AS,
-    initialState?: DeepPartial<S>
-  ): Store<S, AS>
+    initialState?: S
+  ): Store<S & StateFromAS<AS>, AS>
 }
 
 /**
- * Create a global Relite store that hold the state tree, state, and also export 
- * getter and setter, `dispatch` and `actions`,of it with `actions` and 
+ * Create a global Relite store that hold the state tree, state, and also export
+ * getter and setter, `dispatch` and `actions`,of it with `actions` and
  * initialState. It support subscribe changes of state implements with Observer
  * design pattern.
- * 
+ *
  * @param actions An object who contains all the actions those can create state
  * and return it through passed previous state and `Payload` data.
  * @param [initialState] The initial state. You may optionally specify it.
- * 
+ *
  * @returns A Relite store that lets you read the state, dispatch actions and
  * subscribe to changes. It contains the setter of state, `replaceState`,
- * `dispatch` and all the `actions` whose have been encapsulated  with function 
+ * `dispatch` and all the `actions` whose have been encapsulated  with function
  * currying, the getter of state, `getState`, and the subscribe API,
  * `subscribe` and `publish`.
  */
@@ -332,32 +434,30 @@ export const createStore: StoreCreator = $createStore
 /**
  * A *LoggerCreator* can create a logger which can record the information
  * when Relite running. The logger should been add to `store` as a listener.
- * 
- * `createLogger({name, filter})` exported from the Relite package from 
+ *
+ * `createLogger({name, filter})` exported from the Relite package from
  * logger creators.
- * 
+ *
  * @template S The type of state to be held by the store.
  */
 export interface LoggerCreator {
-  <S extends object>(
-    props?: LoggerProps<S>
-  ): LogInfo<S>
+  <S extends object>(props?: LoggerProps<S>): LogInfo<S>
 }
 
 /**
  * Export a `logInfo` as a `listener` which record the information of the
  * relite state change.
- * 
+ *
  * @param props It consists of `name` and `filter`. `name` is the identifier
  * of this logger. `filter` is a middleware which will adapt `data`.
- * 
+ *
  * @returns A listener to record store state changed.
  */
 export const createLogger: LoggerCreator = $createLogger
 
 /**
  * The arguments of LoggerCreator.
- * 
+ *
  * @template S The type of state to be held by the store.
  */
 export interface LoggerProps<S extends object> {
@@ -369,9 +469,9 @@ export interface LoggerProps<S extends object> {
 
 /**
  * A type of `listener` of Relite store.
- * 
+ *
  * @template S The type of state to be held by the store.
- * 
+ *
  * @param data A record of store state change.
  */
 export interface LogInfo<S extends object> {
@@ -380,13 +480,13 @@ export interface LogInfo<S extends object> {
 
 /**
  * A *Filter* is a middleware to sort `data`.
- * 
+ *
  * @template S The type of state to be held by the store.
- * 
+ *
  * @param data The `data` before sorting.
- * 
+ *
  * @returns The `data` after sorting.
- **/
+ */
 export interface Filter<S extends object> {
   (data: Data<S>): Data<S>
 }

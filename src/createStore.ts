@@ -8,74 +8,79 @@ import {
   Dispatch,
   StateUpdator,
   Data,
-  Action,
-  Curring
-} from './index'
+  Actions,
+  StateFromAS,
+  Currings
+} from "./index";
 
-import * as _ from './util'
+import * as _ from "./util";
 
 /**
  * createStore
  */
-const createStore: StoreCreator = <S extends object, AS extends Record<string, Action<S>>>(actions, initialState) => {
+const createStore: StoreCreator = <
+  S extends object,
+  AS extends Actions<S & StateFromAS<AS>>
+>(
+  actions,
+  initialState
+) => {
   if (!_.isObj(actions)) {
-    throw new Error(`Expected first argument to be an object`)
+    throw new Error(`Expected first argument to be an object`);
   }
 
-  let listeners: Listener<S>[] = []
+  let listeners: Listener<S>[] = [];
   let subscribe: Subscribe<S> = (listener: Listener<S>) => {
-    listeners.push(listener)
+    listeners.push(listener);
     return () => {
-      let index = listeners.indexOf(listener)
+      let index = listeners.indexOf(listener);
       if (index !== -1) {
-        listeners.splice(index, 1)
+        listeners.splice(index, 1);
+      } else {
+        console.warn(
+          "You want to unsubscribe a nonexistent listener. Maybe you had unsubscribed it"
+        );
       }
-    }
-  }
+    };
+  };
 
   let publish: Publish<S> = data => {
-    listeners.forEach(listener => listener(data))
-  }
+    listeners.forEach(listener => listener(data));
+  };
 
-  let currentState: S = initialState
+  let currentState: S = initialState;
 
-  let getState = () => currentState
+  let getState = () => currentState;
   let replaceState: ReplaceState<S> = (nextState, data, silent) => {
-    if (data && data.isAsync) {
-      // merge currentState and nextState to make sure all state is new
-      currentState = {
-        ...currentState,
-        ...nextState,
-      }
-    } else {
-      currentState = nextState
-    }
+    currentState = nextState;
     if (!silent) {
-      publish(data)
+      publish(data);
     }
-  }
+  };
 
-  let isDispatching: boolean = false
+  let isDispatching: boolean = false;
   let dispatch: Dispatch<S> = (actionType, actionPayload) => {
     if (isDispatching) {
-      throw new Error(`store.dispatch(actionType, actionPayload): handler may not dispatch`)
+      throw new Error(
+        `store.dispatch(actionType, actionPayload): handler may not dispatch`
+      );
     }
 
-    let start: Date = new Date()
-    let nextState: S = currentState
+    let start: Date = new Date();
+    let nextState: S = currentState;
     try {
-      isDispatching = true
-      nextState = actions[actionType](currentState, actionPayload)
+      isDispatching = true;
+      nextState = actions[actionType](currentState, actionPayload);
     } catch (error) {
-      throw error
+      throw error;
     } finally {
-      isDispatching = false
+      isDispatching = false;
     }
 
-    let isAsync: boolean = false
+    let isAsync: boolean = false;
     let updateState: StateUpdator<S> = nextState => {
       if (nextState === currentState) {
-        return currentState
+        return currentState;
       }
 
       let data: Data<S> = {
@@ -86,22 +91,29 @@ const createStore: StoreCreator = <S extends object, AS extends Record<string, A
         actionPayload,
         previousState: currentState,
         currentState: nextState
+      };
+
+      replaceState(nextState, data);
+
+      return nextState;
+    };
+
+    return updateState(nextState);
+  };
+
+  let curryActions: Partial<Currings<S, AS>> = Object.keys(actions).reduce(
+    (obj, actionType) => {
+      if (_.isFn(actions[actionType])) {
+        obj[actionType] = actionPayload => dispatch(actionType, actionPayload);
+      } else {
+        throw new Error(
+          `Action must be a function. accept ${actions[actionType]}`
+        );
       }
-
-      replaceState(nextState, data)
-
-      return nextState
-    }
-
-    return updateState(nextState)
-  }
-
-  let curryActions: Partial<Curring<S, AS>> = Object.keys(actions).reduce((obj, actionType) => {
-    if (_.isFn(actions[actionType])) {
-      obj[actionType] = actionPayload => dispatch(actionType, actionPayload)
-    }
-    return obj
-  }, {})
+      return obj;
+    },
+    {}
+  );
 
   let store: Store<S, AS> = {
     actions: curryActions,
@@ -109,10 +121,10 @@ const createStore: StoreCreator = <S extends object, AS extends Record<string, A
     replaceState,
     dispatch,
     subscribe,
-    publish,
-  }
+    publish
+  };
 
-  return store
-}
+  return store;
+};
 
-export default createStore
+export default createStore;
