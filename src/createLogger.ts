@@ -1,17 +1,17 @@
 /**
  * createLogger
  */
-import { Pad, Filter, LoggerCreator, LogInfo } from "./index";
+import { Pad, Filter, LoggerCreator, LogInfo, Actions } from "./index";
 
-const createLogger: LoggerCreator = <S extends object>({
+const createLogger: LoggerCreator = <S extends object, AS extends Actions<S>>({
   name = undefined,
   filter = undefined
 } = {}) => {
   const pad: Pad = num => ("0" + num).slice(-2);
-  const identity: Filter<S> = obj => obj;
+  const identity: Filter<S, AS> = obj => obj;
   filter = typeof filter === "function" ? filter : identity;
 
-  let logInfo: LogInfo<S> = data => {
+  let logInfo: LogInfo<S, AS> = data => {
     const attr: string =
       typeof console !== "undefined" && typeof console.info !== "undefined"
         ? "info"

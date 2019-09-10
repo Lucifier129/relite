@@ -198,11 +198,11 @@ export type PayloadFromAction<A> = A extends Action<object, infer P> ? P : A
  *
  * @template S The type of state to be held by the store.
  */
-export interface Data<S extends object> {
+export interface Data<S extends object, AS extends Actions<S>> {
   /**
    * The identifier `actionType` of `Action` of this change.
    */
-  actionType: string
+  actionType: keyof AS
 
   /**
    * The additional `Payload` data of a change from the `Action` of this
@@ -237,8 +237,8 @@ export interface Data<S extends object> {
  *
  * @template S The type of state to be held by the store.
  */
-export interface Subscribe<S extends object> {
-  (listener: Listener<S>): () => void
+export interface Subscribe<S extends object, AS extends Actions<S>> {
+  (listener: Listener<S, AS>): () => void
 }
 
 /**
@@ -251,8 +251,8 @@ export interface Subscribe<S extends object> {
  * @param [data] The data object that record the change of once `Action` has
  * been called by `dispatch()`.
  */
-export interface Listener<S extends object> {
-  (data?: Data<S>): any
+export interface Listener<S extends object, AS extends Actions<S>> {
+  (data?: Data<S, AS>): any
 }
 
 /**
@@ -262,8 +262,8 @@ export interface Listener<S extends object> {
  *
  * @template S The type of state to be held by the store.
  */
-export interface Publish<S extends object> {
-  (data: Data<S>): void
+export interface Publish<S extends object, AS extends Actions<S>> {
+  (data: Data<S, AS>): void
 }
 
 /**
@@ -272,8 +272,8 @@ export interface Publish<S extends object> {
  *
  * @template S The type of state to be held by the store.
  */
-export interface ReplaceState<S extends object> {
-  (nextState: S, data?: Data<S>, silent?: boolean): void
+export interface ReplaceState<S extends object, AS extends Actions<S>> {
+  (nextState: S, data?: Data<S, AS>, silent?: boolean): void
 }
 
 /**
@@ -332,7 +332,7 @@ export interface Store<S extends object, AS extends Actions<S>> {
    * @param [silent] The signature indicate if we need to `publish()`. `true`
    * indicate not. `false` indicate yes. Default value is `false`.
    */
-  replaceState: ReplaceState<S>
+  replaceState: ReplaceState<S, AS>
   /**
    * Dispatches an Action. It is the only way to trigger a state change.
    *
@@ -377,7 +377,7 @@ export interface Store<S extends object, AS extends Actions<S>> {
    *
    * @returns `unsubscribe` A function to remove this listener.
    */
-  subscribe: Subscribe<S>
+  subscribe: Subscribe<S, AS>
 
   /**
    * Broadcast all the listener attached before.
@@ -385,7 +385,7 @@ export interface Store<S extends object, AS extends Actions<S>> {
    * @param data The state change information.The data object that need to
    * pass in all `Listener`.
    */
-  publish: Publish<S>
+  publish: Publish<S, AS>
 }
 
 /**
@@ -437,7 +437,7 @@ export const createStore: StoreCreator = $createStore
  * @template S The type of state to be held by the store.
  */
 export interface LoggerCreator {
-  <S extends object>(props?: LoggerProps<S>): LogInfo<S>
+  <S extends object, AS extends Actions<S>>(props?: LoggerProps<S, AS>): LogInfo<S, AS>
 }
 
 /**
@@ -456,11 +456,11 @@ export const createLogger: LoggerCreator = $createLogger
  *
  * @template S The type of state to be held by the store.
  */
-export interface LoggerProps<S extends object> {
+export interface LoggerProps<S extends object, AS extends Actions<S>> {
   /** the identifier of this logger */
   name?: string
   /** a middleware which will adapt `data` */
-  filter?: Filter<S>
+  filter?: Filter<S, AS>
 }
 
 /**
@@ -470,8 +470,8 @@ export interface LoggerProps<S extends object> {
  *
  * @param data A record of store state change.
  */
-export interface LogInfo<S extends object> {
-  (data: Data<S>): void
+export interface LogInfo<S extends object, AS extends Actions<S>> {
+  (data: Data<S, AS>): void
 }
 
 /**
@@ -483,8 +483,8 @@ export interface LogInfo<S extends object> {
  *
  * @returns The `data` after sorting.
  */
-export interface Filter<S extends object> {
-  (data: Data<S>): Data<S>
+export interface Filter<S extends object, AS extends Actions<S>> {
+  (data: Data<S, AS>): Data<S, AS>
 }
 
 /**

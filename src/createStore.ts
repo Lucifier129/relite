@@ -29,8 +29,8 @@ const createStore: StoreCreator = <
     throw new Error(`Expected first argument to be an object`);
   }
 
-  let listeners: Listener<S>[] = [];
-  let subscribe: Subscribe<S> = (listener: Listener<S>) => {
+  let listeners: Listener<S, AS>[] = [];
+  let subscribe: Subscribe<S, AS> = (listener: Listener<S, AS>) => {
     listeners.push(listener);
     return () => {
       let index = listeners.indexOf(listener);
@@ -44,14 +44,14 @@ const createStore: StoreCreator = <
     };
   };
 
-  let publish: Publish<S> = data => {
+  let publish: Publish<S, AS> = data => {
     listeners.forEach(listener => listener(data));
   };
 
   let currentState: S = initialState;
 
   let getState = () => currentState;
-  let replaceState: ReplaceState<S> = (nextState, data, silent) => {
+  let replaceState: ReplaceState<S, AS> = (nextState, data, silent) => {
     currentState = nextState;
     if (!silent) {
       publish(data);
@@ -82,7 +82,7 @@ const createStore: StoreCreator = <
         return currentState;
       }
 
-      let data: Data<S> = {
+      let data: Data<S, AS> = {
         start,
         end: new Date(),
         actionType,
