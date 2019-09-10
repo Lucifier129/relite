@@ -228,10 +228,6 @@ export interface Data<S extends object> {
    * The finished time of this change occur.
    */
   end: Date
-  /**
-   * If the result of `Action` is a Promise.
-   */
-  isAsync: boolean
 }
 
 /** Store */

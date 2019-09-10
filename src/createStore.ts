@@ -77,14 +77,12 @@ const createStore: StoreCreator = <
       isDispatching = false;
     }
 
-    let isAsync: boolean = false;
     let updateState: StateUpdator<S> = nextState => {
       if (nextState === currentState) {
         return currentState;
       }
 
       let data: Data<S> = {
-        isAsync,
         start,
         end: new Date(),
         actionType,
