@@ -146,29 +146,17 @@ export type Actions<S extends object> = Record<string, AnyAction<S>>
  * The actions consist of `Action` need map to the actions consist of `CurringAction`.
  *
  * The code hint of actions and the `Payload` type hint will work after doing this.
- * 
- * The progress is 
- * [state, payload?] = [state] + [state, payload]
- * match [state, payload]
- * match [state]
- * otherwise is [state, payload?]
  *
  * @template S The type of state to be held by the store.
  * @template AS The type of actions consist of `Action`. It will be map to the actions
  * that store will export.
  */
 export type Curring<
-  State extends object,
-  Action extends AnyAction<State>
-> = Args<Action> extends [object, any]
-  ? CurringActionWithPayload<State, Arg1<Action>>
-  : Args<Action> extends [object]
-    ? CurringAction<State>
-    : CurringActionWithPayloadOptional<State, Arg1<Action>>
-
-type Args<F> = F extends ((...args: infer ARGS) => any) ? ARGS : never
-
-type Arg1<F> = F extends ((arg0, arg1: infer ARG1) => any) ? ARG1 : never
+  S extends object,
+  A extends AnyAction<S>
+> = A extends ((state: S, ...args: infer Args) => infer Result)
+  ? ((...args: Args) => Result)
+  : never
 
 /**
  * The cyrring `Actions`. Each `Action` in this will be optional.
