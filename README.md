@@ -18,11 +18,6 @@ With `relite`, we don't need to `combine | apply | bind` anything, just write pu
 npm install --save relite
 ```
 
-# Demo
-
-- [counter](https://github.com/Lucifier129/relite/tree/master/examples/counter)
-- [flappy-bird](https://github.com/Lucifier129/flappy-bird)
-
 # How to use
 
 ## write pure function
@@ -109,7 +104,7 @@ store.dispatch('EXEC_ASYNC', 10) // dispatch the action manually
 ## use build-in logger
 
 ```javascript
-import { createStore, createLogger } from 'relite'
+import { createStore } from 'relite'
 import * as actions from './actions'
 
 let initialState = {
@@ -117,11 +112,6 @@ let initialState = {
 }
 let store = createStore(actions, intialState)
 
-let logger =  createLogger({
-	name: 'logger-name',
-})
-
-store.subscribe(logger)
 store.subscribe(render)
 
 render()
