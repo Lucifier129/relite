@@ -3,8 +3,7 @@
  *
  * A redux-like library for managing state with simpler api.
  */
-import $createStore from "./createStore"
-import $createLogger from "./createLogger"
+import * as _ from "./util";
 
 /** Action */
 
@@ -146,29 +145,17 @@ export type Actions<S extends object> = Record<string, AnyAction<S>>
  * The actions consist of `Action` need map to the actions consist of `CurringAction`.
  *
  * The code hint of actions and the `Payload` type hint will work after doing this.
- * 
- * The progress is 
- * [state, payload?] = [state] + [state, payload]
- * match [state, payload]
- * match [state]
- * otherwise is [state, payload?]
  *
  * @template S The type of state to be held by the store.
  * @template AS The type of actions consist of `Action`. It will be map to the actions
  * that store will export.
  */
 export type Curring<
-  State extends object,
-  Action extends AnyAction<State>
-> = Args<Action> extends [object, any]
-  ? CurringActionWithPayload<State, Arg1<Action>>
-  : Args<Action> extends [object]
-    ? CurringAction<State>
-    : CurringActionWithPayloadOptional<State, Arg1<Action>>
-
-type Args<F> = F extends ((...args: infer ARGS) => any) ? ARGS : never
-
-type Arg1<F> = F extends ((arg0, arg1: infer ARG1) => any) ? ARG1 : never
+  S extends object,
+  A extends AnyAction<S>
+> = A extends ((state: S, ...args: infer Args) => infer Result)
+  ? ((...args: Args) => Result)
+  : never
 
 /**
  * The cyrring `Actions`. Each `Action` in this will be optional.
@@ -198,11 +185,11 @@ export type PayloadFromAction<A> = A extends Action<object, infer P> ? P : A
  *
  * @template S The type of state to be held by the store.
  */
-export interface Data<S extends object> {
+export interface Data<S extends object, AS extends Actions<S>> {
   /**
    * The identifier `actionType` of `Action` of this change.
    */
-  actionType: string
+  actionType: keyof AS
 
   /**
    * The additional `Payload` data of a change from the `Action` of this
@@ -228,10 +215,6 @@ export interface Data<S extends object> {
    * The finished time of this change occur.
    */
   end: Date
-  /**
-   * If the result of `Action` is a Promise.
-   */
-  isAsync: boolean
 }
 
 /** Store */
@@ -241,8 +224,8 @@ export interface Data<S extends object> {
  *
  * @template S The type of state to be held by the store.
  */
-export interface Subscribe<S extends object> {
-  (listener: Listener<S>): () => void
+export interface Subscribe<S extends object, AS extends Actions<S>> {
+  (listener: Listener<S, AS>): () => void
 }
 
 /**
@@ -255,8 +238,8 @@ export interface Subscribe<S extends object> {
  * @param [data] The data object that record the change of once `Action` has
  * been called by `dispatch()`.
  */
-export interface Listener<S extends object> {
-  (data?: Data<S>): any
+export interface Listener<S extends object, AS extends Actions<S>> {
+  (data?: Data<S, AS>): any
 }
 
 /**
@@ -266,8 +249,8 @@ export interface Listener<S extends object> {
  *
  * @template S The type of state to be held by the store.
  */
-export interface Publish<S extends object> {
-  (data: Data<S>): void
+export interface Publish<S extends object, AS extends Actions<S>> {
+  (data: Data<S, AS>): void
 }
 
 /**
@@ -276,8 +259,8 @@ export interface Publish<S extends object> {
  *
  * @template S The type of state to be held by the store.
  */
-export interface ReplaceState<S extends object> {
-  (nextState: S, data?: Data<S>, silent?: boolean): void
+export interface ReplaceState<S extends object, AS extends Actions<S>> {
+  (nextState: S, data?: Data<S, AS>, silent?: boolean): void
 }
 
 /**
@@ -336,7 +319,7 @@ export interface Store<S extends object, AS extends Actions<S>> {
    * @param [silent] The signature indicate if we need to `publish()`. `true`
    * indicate not. `false` indicate yes. Default value is `false`.
    */
-  replaceState: ReplaceState<S>
+  replaceState: ReplaceState<S, AS>
   /**
    * Dispatches an Action. It is the only way to trigger a state change.
    *
@@ -381,7 +364,7 @@ export interface Store<S extends object, AS extends Actions<S>> {
    *
    * @returns `unsubscribe` A function to remove this listener.
    */
-  subscribe: Subscribe<S>
+  subscribe: Subscribe<S, AS>
 
   /**
    * Broadcast all the listener attached before.
@@ -389,7 +372,7 @@ export interface Store<S extends object, AS extends Actions<S>> {
    * @param data The state change information.The data object that need to
    * pass in all `Listener`.
    */
-  publish: Publish<S>
+  publish: Publish<S, AS>
 }
 
 /**
@@ -427,73 +410,109 @@ export interface StoreCreator {
  * currying, the getter of state, `getState`, and the subscribe API,
  * `subscribe` and `publish`.
  */
-export const createStore: StoreCreator = $createStore
+export const createStore: StoreCreator = <
+  S extends object,
+  AS extends Actions<S & StateFromAS<AS>>
+>(
+  actions,
+  initialState
+) => {
+  if (!_.isObj(actions)) {
+    throw new Error(`Expected first argument to be an object`);
+  }
 
-/** Logger */
+  let listeners: Listener<S, AS>[] = [];
+  let subscribe: Subscribe<S, AS> = (listener: Listener<S, AS>) => {
+    listeners.push(listener);
+    return () => {
+      let index = listeners.indexOf(listener);
+      if (index !== -1) {
+        listeners.splice(index, 1);
+      } else {
+        console.warn(
+          "You want to unsubscribe a nonexistent listener. Maybe you had unsubscribed it"
+        );
+      }
+    };
+  };
 
-/**
- * A *LoggerCreator* can create a logger which can record the information
- * when Relite running. The logger should been add to `store` as a listener.
- *
- * `createLogger({name, filter})` exported from the Relite package from
- * logger creators.
- *
- * @template S The type of state to be held by the store.
- */
-export interface LoggerCreator {
-  <S extends object>(props?: LoggerProps<S>): LogInfo<S>
-}
+  let publish: Publish<S, AS> = data => {
+    listeners.forEach(listener => listener(data));
+  };
 
-/**
- * Export a `logInfo` as a `listener` which record the information of the
- * relite state change.
- *
- * @param props It consists of `name` and `filter`. `name` is the identifier
- * of this logger. `filter` is a middleware which will adapt `data`.
- *
- * @returns A listener to record store state changed.
- */
-export const createLogger: LoggerCreator = $createLogger
+  let currentState: S = initialState;
 
-/**
- * The arguments of LoggerCreator.
- *
- * @template S The type of state to be held by the store.
- */
-export interface LoggerProps<S extends object> {
-  /** the identifier of this logger */
-  name?: string
-  /** a middleware which will adapt `data` */
-  filter?: Filter<S>
-}
+  let getState = () => currentState;
+  let replaceState: ReplaceState<S, AS> = (nextState, data, silent) => {
+    currentState = nextState;
+    if (!silent) {
+      publish(data);
+    }
+  };
 
-/**
- * A type of `listener` of Relite store.
- *
- * @template S The type of state to be held by the store.
- *
- * @param data A record of store state change.
- */
-export interface LogInfo<S extends object> {
-  (data: Data<S>): void
-}
+  let isDispatching: boolean = false;
+  let dispatch: Dispatch<S> = (actionType, actionPayload) => {
+    if (isDispatching) {
+      throw new Error(
+        `store.dispatch(actionType, actionPayload): handler may not dispatch`
+      );
+    }
 
-/**
- * A *Filter* is a middleware to sort `data`.
- *
- * @template S The type of state to be held by the store.
- *
- * @param data The `data` before sorting.
- *
- * @returns The `data` after sorting.
- */
-export interface Filter<S extends object> {
-  (data: Data<S>): Data<S>
-}
+    let start: Date = new Date();
+    let nextState: S = currentState;
+    try {
+      isDispatching = true;
+      nextState = actions[actionType](currentState, actionPayload);
+    } catch (error) {
+      throw error;
+    } finally {
+      isDispatching = false;
+    }
 
-/**
- * A time string formatter.
- */
-export interface Pad {
-  (num: number): string
-}
+    let updateState: StateUpdator<S> = nextState => {
+      if (nextState === currentState) {
+        return currentState;
+      }
+
+      let data: Data<S, AS> = {
+        start,
+        end: new Date(),
+        actionType,
+        actionPayload,
+        previousState: currentState,
+        currentState: nextState
+      };
+
+      replaceState(nextState, data);
+
+      return nextState;
+    };
+
+    return updateState(nextState);
+  };
+
+  let curryActions: Partial<Currings<S, AS>> = Object.keys(actions).reduce(
+    (obj, actionType) => {
+      if (_.isFn(actions[actionType])) {
+        obj[actionType] = actionPayload => dispatch(actionType, actionPayload);
+      } else {
+        throw new Error(
+          `Action must be a function. accept ${actions[actionType]}`
+        );
+      }
+      return obj;
+    },
+    {}
+  );
+
+  let store: Store<S, AS> = {
+    actions: curryActions,
+    getState,
+    replaceState,
+    dispatch,
+    subscribe,
+    publish
+  };
+
+  return store;
+};
