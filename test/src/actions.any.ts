@@ -9,7 +9,7 @@ export const STANDARD = state => {
   }
 }
 
-export const Payload = (state, payload?: {
+export const Payload = (state, payload: {
   cc: number
 }) => {
   return {

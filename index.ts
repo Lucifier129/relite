@@ -3,7 +3,9 @@
  *
  * A redux-like library for managing state with simpler api.
  */
+
 /** Action */
+
 /**
  * A function looks like a reducer of redux, but more simple and powerful.
  *
@@ -29,6 +31,7 @@
 export interface AnyAction<S extends object = {}, P = unknown, RS = unknown> {
   (state: S, payload: P): RS
 }
+
 /**
  * The standard `Action`
  *
@@ -37,12 +40,14 @@ export interface AnyAction<S extends object = {}, P = unknown, RS = unknown> {
  * @template S Store state type.
  * @template P Payload type.
  */
-export declare type Action<S extends object, P = unknown> = AnyAction<S, P, S>
+export type Action<S extends object, P = unknown> = AnyAction<S, P, S>
+
 /**
  * Curring Action
  *
  * There are three type Action after curring.
  */
+
 /**
  * `CurringAction` only return new store state.
  *
@@ -51,6 +56,7 @@ export declare type Action<S extends object, P = unknown> = AnyAction<S, P, S>
 export interface CurringAction<S extends object> {
   (): S
 }
+
 /**
  * `CurringActionWithPayload` has one argument `Payload` certainly and
  * return new store state.
@@ -63,6 +69,7 @@ export interface CurringAction<S extends object> {
 export interface CurringActionWithPayload<S extends object, P> {
   (payload: P): S
 }
+
 /**
  * `CurringActionWithPayloadOptional` has one argument `Payload` optionally
  * and return new store state.
@@ -75,6 +82,7 @@ export interface CurringActionWithPayload<S extends object, P> {
 export interface CurringActionWithPayloadOptional<S extends object, P> {
   (payload?: P): S
 }
+
 /**
  * Transiform *Union* type to *Intersection* type
  *
@@ -82,11 +90,12 @@ export interface CurringActionWithPayloadOptional<S extends object, P> {
  *
  * @template U The input *Union* type
  */
-export declare type UnionToIntersection<U> = (U extends any
+export type UnionToIntersection<U> = (U extends any
   ? (k: U) => void
   : never) extends ((k: infer I) => void)
   ? I
   : never
+
 /**
  * Get return type of `Action`
  *
@@ -94,13 +103,14 @@ export declare type UnionToIntersection<U> = (U extends any
  *
  * @template A The input `Action` type
  */
-export declare type StateFromAction<A> = A extends AnyAction
+export type StateFromAction<A> = A extends AnyAction
   ? unknown extends ReturnType<A>
   ? {}
   : ReturnType<A> extends object
   ? ReturnType<A>
   : {}
   : {}
+
 /**
  * Get *Union* type of states from `Actions`
  *
@@ -108,23 +118,43 @@ export declare type StateFromAction<A> = A extends AnyAction
  *
  * @template AS The input `Actions` type
  */
-export declare type UnionStateFromAS<AS> = {
+export type UnionStateFromAS<AS> = {
   [K in keyof AS]: StateFromAction<AS[K]>
 }[keyof AS]
+
 /**
  * Get *Intersection* type of states from `Actions`
  *
  * @template AS The input `Actions` type
  */
-export declare type StateFromAS<AS> = UnionToIntersection<UnionStateFromAS<AS>>
+export type StateFromAS<AS> = UnionToIntersection<UnionStateFromAS<AS>>
+
 /**
  * The collection of `Action`.
  *
  * @template S The type of state to be held by the store.
  */
-export declare type Actions<S extends object> = {
-  [propName: string]: AnyAction<S>
+export type Actions<S extends object> = {
+  [propName: string]: AnyAction<S, unknown, S>
 }
+
+/**
+ * Get the rest arguments of action.
+ * 
+ * @template S The type of state to be held by the store.
+ * @template AS The type of actions consist of `Action`. It will be map to the actions
+ * that store will export.
+ * @template A The type of action which need to infer arguments.
+ */
+
+export type Args<
+  S extends object,
+  AS extends Actions<Partial<S & StateFromAS<AS>>>,
+  A extends AnyAction<Partial<S & StateFromAS<AS>>>
+  > = A extends ((state: S, ...args: infer Args) => any)
+  ? Args
+  : never
+
 /**
  * In Relite, before actions exported by `store` them must be currying from some
  * `Action` those looks like `(s: State, p?: Payload) => State` to a `CurryingAction`
@@ -138,12 +168,14 @@ export declare type Actions<S extends object> = {
  * @template AS The type of actions consist of `Action`. It will be map to the actions
  * that store will export.
  */
-export declare type Curring<
+export type Curring<
   S extends object,
-  A extends AnyAction<S>
-  > = A extends ((state: S, ...args: infer Args) => infer Result)
-  ? ((...args: Args) => Result)
+  AS extends Actions<Partial<S & StateFromAS<AS>>>,
+  A extends AnyAction<Partial<S & StateFromAS<AS>>>
+  > = A extends ((state: S, ...args: infer Args) => S)
+  ? ((...args: Args) => S)
   : never
+
 /**
  * The cyrring `Actions`. Each `Action` in this will be optional.
  *
@@ -151,21 +183,22 @@ export declare type Curring<
  * @template AS The type of actions consist of `Action`. It will be map to the actions
  * that store will export.
  */
-export declare type Currings<
+export type Currings<
   S extends object,
-  AS extends Actions<S & StateFromAS<AS>>
+  AS extends Actions<Partial<S & StateFromAS<AS>>>
   > = {
-    readonly [k in keyof AS]: Curring<S, AS[k]>
+    [k in keyof AS]: Curring<S, AS, AS[k]>
   }
+
 /**
  * Infer the `Payload` data shape from an `Action`.
  *
  * @template A The type of `Action` which we want to infer from.
  */
-export declare type PayloadFromAction<A> = A extends Action<object, infer P>
-  ? P
-  : A
+export type PayloadFromAction<A> = A extends Action<object, infer P> ? P : A
+
 /** Data */
+
 /**
  * A object that record all information of once change of state.
  *
@@ -176,27 +209,29 @@ export declare type PayloadFromAction<A> = A extends Action<object, infer P>
  */
 export interface Data<
   S extends object,
-  AS extends Actions<S & StateFromAS<AS>>
+  AS extends Actions<Partial<S & StateFromAS<AS>>>
   > {
   /**
    * The identifier `actionType` of `Action` of this change.
    */
   actionType: keyof AS
+
   /**
    * The additional `Payload` data of a change from the `Action` of this
    * change.
    */
-  actionPayload: PayloadFromAction<Action<S>>
+  actionPayload: PayloadFromAction<Action<Partial<S & StateFromAS<AS>>>>
+
   /**
    * The snapshoot of state before this change. The state that passed into
    * `Action`.
    */
-  previousState: S
+  previousState: Partial<S & StateFromAS<AS>>
   /**
    * The state will be after this change. The state that returned from
    * `Action`.
    */
-  currentState: S
+  currentState: Partial<S & StateFromAS<AS>>
   /**
    * The start time of this change occur.
    */
@@ -206,7 +241,9 @@ export interface Data<
    */
   end: Date
 }
+
 /** Store */
+
 /**
  * An addit of store to add listener which listen the state change.
  *
@@ -214,10 +251,11 @@ export interface Data<
  */
 export interface Subscribe<
   S extends object,
-  AS extends Actions<S & StateFromAS<AS>>
+  AS extends Actions<Partial<S & StateFromAS<AS>>>
   > {
   (listener: Listener<S, AS>): () => void
 }
+
 /**
  * An callback will been called when state has changed which has been add by
  * `subscribe()`. The state change information, `Data`, will been passed in
@@ -230,10 +268,11 @@ export interface Subscribe<
  */
 export interface Listener<
   S extends object,
-  AS extends Actions<S & StateFromAS<AS>>
+  AS extends Actions<Partial<S & StateFromAS<AS>>>
   > {
   (data?: Data<S, AS>): any
 }
+
 /**
  * An broadcast function which will call all listener added before. The
  * parameter `Data` passed into listener is it's parameter `Data`. So we
@@ -243,10 +282,11 @@ export interface Listener<
  */
 export interface Publish<
   S extends object,
-  AS extends Actions<S & StateFromAS<AS>>
+  AS extends Actions<Partial<S & StateFromAS<AS>>>
   > {
   (data: Data<S, AS>): void
 }
+
 /**
  * A setter of state which recover previous state forcedly. It may make
  * the state change uncertainly.
@@ -255,10 +295,11 @@ export interface Publish<
  */
 export interface ReplaceState<
   S extends object,
-  AS extends Actions<S & StateFromAS<AS>>
+  AS extends Actions<Partial<S & StateFromAS<AS>>>
   > {
   (nextState: S, data?: Data<S, AS>, silent?: boolean): void
 }
+
 /**
  * A dispatcher that construct a new `Data` which record information of
  * new change of state by calling `Action` and call `updateState()` to
@@ -266,9 +307,11 @@ export interface ReplaceState<
  *
  * @template S The type of state to be held by the store.
  */
-export interface Dispatch<S extends object> {
-  (actionType: string, actionPayload?: PayloadFromAction<Action<S>>): S
-}
+export type Dispatch<
+  S extends object,
+  AS extends Actions<Partial<S & StateFromAS<AS>>>,
+  > = <K extends keyof AS>(actionType: K, ...args: Args<S, AS, AS[K]>) => S
+
 /**
  * An state updator which get the final next state and call `replaceState()`
  * to change state.
@@ -282,6 +325,7 @@ export interface Dispatch<S extends object> {
 export interface StateUpdator<S extends object> {
   (nextState: S): S
 }
+
 /**
  * An object which export all API for change `state` and attach listener.
  *
@@ -290,7 +334,7 @@ export interface StateUpdator<S extends object> {
  */
 export interface Store<
   S extends object,
-  AS extends Actions<S & StateFromAS<AS>>
+  AS extends Actions<Partial<S & StateFromAS<AS>>>
   > {
   /**
    * Contain all caller curring from `Action` passed in `createStore` and
@@ -298,13 +342,15 @@ export interface Store<
    *
    * CurryingAction
    */
-  actions: Partial<Currings<S, AS>>
+  actions: Currings<Partial<S & StateFromAS<AS>>, AS>
+
   /**
    * Reads the state tree managed by the store.
    *
    * @returns The current state tree of your application that just can read.
    */
-  getState(): S
+  getState(): Partial<S & StateFromAS<AS>>
+
   /**
    * Cover the state with the new state and the data passed in. It will
    * change the state unpredictably called by user directly.
@@ -314,7 +360,7 @@ export interface Store<
    * @param [silent] The signature indicate if we need to `publish()`. `true`
    * indicate not. `false` indicate yes. Default value is `false`.
    */
-  replaceState: ReplaceState<S, AS>
+  replaceState: ReplaceState<Partial<S & StateFromAS<AS>>, AS>
   /**
    * Dispatches an Action. It is the only way to trigger a state change.
    *
@@ -332,7 +378,8 @@ export interface Store<
    *
    * @returns For convenience, the next state object you changed to.
    */
-  dispatch: Dispatch<S>
+  dispatch: Dispatch<Partial<S & StateFromAS<AS>>, AS>
+
   /**
    * Adds a change listener. It will be called any time an Action is
    * dispatched, and some part of the state tree may potentially have changed.
@@ -358,15 +405,17 @@ export interface Store<
    *
    * @returns `unsubscribe` A function to remove this listener.
    */
-  subscribe: Subscribe<S, AS>
+  subscribe: Subscribe<Partial<S & StateFromAS<AS>>, AS>
+
   /**
    * Broadcast all the listener attached before.
    *
    * @param data The state change information.The data object that need to
    * pass in all `Listener`.
    */
-  publish: Publish<S, AS>
+  publish: Publish<Partial<S & StateFromAS<AS>>, AS>
 }
+
 /**
  * A *StoreCreator* can create a global Relite store that hold the state tree,
  * state, and also create getter and setter, `dispatch` and currying `actions`,
@@ -380,12 +429,14 @@ export interface Store<
  * @template AS The type of actions those may be call by dispatch.
  */
 export interface StoreCreator {
-  <S extends object, AS extends Actions<S & StateFromAS<AS>>>(
+  <S extends object, AS extends Actions<Partial<S & StateFromAS<AS>>>>(
     actions: AS,
     initialState?: S
   ): Store<S, AS>
 }
+
 /** CreateStore */
+
 /**
  * Create a global Relite store that hold the state tree, state, and also export
  * getter and setter, `dispatch` and `actions`,of it with `actions` and
@@ -402,4 +453,127 @@ export interface StoreCreator {
  * currying, the getter of state, `getState`, and the subscribe API,
  * `subscribe` and `publish`.
  */
-export declare const createStore: StoreCreator
+export const createStore: StoreCreator = <
+  S extends object,
+  AS extends Actions<Partial<S & StateFromAS<AS>>>
+>(
+  actions: AS,
+  initialState: S
+) => {
+  if (Object.prototype.toString.call(actions) !== "[object Object]") {
+    throw new Error(`Expected first argument to be an object`)
+  }
+
+  let listeners: Listener<Partial<S & StateFromAS<AS>>, AS>[] = []
+  let subscribe: Subscribe<Partial<S & StateFromAS<AS>>, AS> = (
+    listener: Listener<Partial<S & StateFromAS<AS>>, AS>
+  ) => {
+    listeners.push(listener)
+    return () => {
+      let index = listeners.indexOf(listener)
+      if (index !== -1) {
+        listeners.splice(index, 1)
+      } else {
+        console.warn(
+          "You want to unsubscribe a nonexistent listener. Maybe you had unsubscribed it"
+        )
+      }
+    }
+  }
+
+  let publish: Publish<Partial<S & StateFromAS<AS>>, AS> = data => {
+    listeners.forEach(listener => listener(data))
+  }
+
+  let currentState: Partial<S & StateFromAS<AS>> = initialState
+
+  let getState = () => currentState
+  let replaceState: ReplaceState<Partial<S & StateFromAS<AS>>, AS> = (
+    nextState,
+    data,
+    silent
+  ) => {
+    currentState = nextState
+    if (!silent) {
+      publish(data)
+    }
+  }
+
+  let isDispatching: boolean = false
+  let dispatch: Dispatch<Partial<S & StateFromAS<AS>>, AS> = (
+    actionType,
+    actionPayload
+  ) => {
+    if (isDispatching) {
+      throw new Error(
+        `store.dispatch(actionType, actionPayload): handler may not dispatch`
+      )
+    }
+
+    let start: Date = new Date()
+    let nextState: Partial<S & StateFromAS<AS>> = currentState
+    try {
+      isDispatching = true
+      nextState = actions[actionType](currentState, actionPayload)
+    } catch (error) {
+      throw error
+    } finally {
+      isDispatching = false
+    }
+
+    let updateState: StateUpdator<Partial<S & StateFromAS<AS>>> = nextState => {
+      if (nextState === currentState) {
+        return currentState
+      }
+
+      let data: Data<S, AS> = {
+        start,
+        end: new Date(),
+        actionType,
+        actionPayload,
+        previousState: currentState,
+        currentState: nextState
+      }
+
+      replaceState(nextState, data)
+
+      return nextState
+    }
+
+    return updateState(nextState)
+  }
+
+  let curryActions: Currings<Partial<S & StateFromAS<AS>>, AS> = getKeys(
+    actions
+  ).reduce(
+    (obj, actionType) => {
+      if (typeof actions[actionType] === "function") {
+        obj[actionType] = ((...args: Args<Partial<S & StateFromAS<AS>>, AS, AS[typeof actionType]>) =>
+          dispatch(actionType, ...args)) as Curring<
+            Partial<S & StateFromAS<AS>>,
+            AS,
+            AS[keyof AS]
+          >
+      } else {
+        throw new Error(
+          `Action must be a function. accept ${actions[actionType]}`
+        )
+      }
+      return obj
+    },
+    {} as Currings<Partial<S & StateFromAS<AS>>, AS>
+  )
+
+  let store: Store<S, AS> = {
+    actions: curryActions,
+    getState,
+    replaceState,
+    dispatch,
+    subscribe,
+    publish
+  }
+
+  return store
+}
+
+const getKeys = <T extends {}>(o: T) => Object.keys(o) as Array<keyof T>
