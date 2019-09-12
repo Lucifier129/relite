@@ -165,7 +165,7 @@ export type Curring<
  * @template AS The type of actions consist of `Action`. It will be map to the actions
  * that store will export.
  */
-export type Currings<S extends object, AS extends Actions<S>> = {
+export type Currings<S extends object, AS extends Actions<S & StateFromAS<AS>>> = {
   readonly [k in keyof AS]: Curring<S, AS[k]>
 }
 
@@ -186,7 +186,7 @@ export type PayloadFromAction<A> = A extends Action<object, infer P> ? P : A
  *
  * @template S The type of state to be held by the store.
  */
-export interface Data<S extends object, AS extends Actions<S>> {
+export interface Data<S extends object, AS extends Actions<S & StateFromAS<AS>>> {
   /**
    * The identifier `actionType` of `Action` of this change.
    */
@@ -225,7 +225,7 @@ export interface Data<S extends object, AS extends Actions<S>> {
  *
  * @template S The type of state to be held by the store.
  */
-export interface Subscribe<S extends object, AS extends Actions<S>> {
+export interface Subscribe<S extends object, AS extends Actions<S & StateFromAS<AS>>> {
   (listener: Listener<S, AS>): () => void
 }
 
@@ -239,7 +239,7 @@ export interface Subscribe<S extends object, AS extends Actions<S>> {
  * @param [data] The data object that record the change of once `Action` has
  * been called by `dispatch()`.
  */
-export interface Listener<S extends object, AS extends Actions<S>> {
+export interface Listener<S extends object, AS extends Actions<S & StateFromAS<AS>>> {
   (data?: Data<S, AS>): any
 }
 
@@ -250,7 +250,7 @@ export interface Listener<S extends object, AS extends Actions<S>> {
  *
  * @template S The type of state to be held by the store.
  */
-export interface Publish<S extends object, AS extends Actions<S>> {
+export interface Publish<S extends object, AS extends Actions<S & StateFromAS<AS>>> {
   (data: Data<S, AS>): void
 }
 
@@ -260,7 +260,7 @@ export interface Publish<S extends object, AS extends Actions<S>> {
  *
  * @template S The type of state to be held by the store.
  */
-export interface ReplaceState<S extends object, AS extends Actions<S>> {
+export interface ReplaceState<S extends object, AS extends Actions<S & StateFromAS<AS>>> {
   (nextState: S, data?: Data<S, AS>, silent?: boolean): void
 }
 
@@ -295,7 +295,7 @@ export interface StateUpdator<S extends object> {
  * @template S The type of state to be held by the store.
  * @template AS The type of actions consist of `Action`.
  */
-export interface Store<S extends object, AS extends Actions<S>> {
+export interface Store<S extends object, AS extends Actions<S & StateFromAS<AS>>> {
   /**
    * Contain all caller curring from `Action` passed in `createStore` and
    * `dispatch`. Could call dispatch whith mapped `Action` type.
