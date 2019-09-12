@@ -17,3 +17,7 @@ package-lock.json
 dist
 
 coverage
+
+index.d.ts
+
+index.js

@@ -11,7 +11,8 @@
   "scripts": {
     "test": "jest --coverage",
     "test:watch": "jest --coverage --watch",
-    "prepare": "npm run test"
+    "build": " tsc",
+    "prepare": "npm run test && npm run build"
   },
   "repository": {
     "type": "git",
