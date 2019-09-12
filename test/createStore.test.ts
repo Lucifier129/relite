@@ -1,4 +1,4 @@
-import { createStore, Action, Actions } from "../src/index"
+import { createStore, Action, Actions } from "../index"
 import * as actions from "./src/actions.helper"
 import * as errorAction from "./src/actions.error"
 import * as changeAction from "./src/actions.change"

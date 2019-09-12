@@ -3,7 +3,6 @@
  *
  * A redux-like library for managing state with simpler api.
  */
-import * as _ from "./util";
 
 /** Action */
 
@@ -135,7 +134,9 @@ export type StateFromAS<AS> = UnionToIntersection<UnionStateFromAS<AS>>
  *
  * @template S The type of state to be held by the store.
  */
-export type Actions<S extends object> = Record<string, AnyAction<S>>
+export type Actions<S extends object> = {
+  [propName: string]: AnyAction<S>
+}
 
 /**
  * In Relite, before actions exported by `store` them must be currying from some
@@ -394,6 +395,8 @@ export interface StoreCreator {
   ): Store<S & StateFromAS<AS>, AS>
 }
 
+/** CreateStore */
+
 /**
  * Create a global Relite store that hold the state tree, state, and also export
  * getter and setter, `dispatch` and `actions`,of it with `actions` and
@@ -417,7 +420,7 @@ export const createStore: StoreCreator = <
   actions,
   initialState
 ) => {
-  if (!_.isObj(actions)) {
+  if (Object.prototype.toString.call(actions) !== "[object Object]") {
     throw new Error(`Expected first argument to be an object`);
   }
 
@@ -493,7 +496,7 @@ export const createStore: StoreCreator = <
 
   let curryActions: Partial<Currings<S, AS>> = Object.keys(actions).reduce(
     (obj, actionType) => {
-      if (_.isFn(actions[actionType])) {
+      if (typeof actions[actionType] === "function") {
         obj[actionType] = actionPayload => dispatch(actionType, actionPayload);
       } else {
         throw new Error(
