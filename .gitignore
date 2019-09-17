@@ -21,3 +21,7 @@ coverage
 index.d.ts
 
 index.js
+
+util.d.ts
+
+util.js
