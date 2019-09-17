@@ -1,6 +1,6 @@
 // actions
 
-export let INCREMENT = (state) => {
+export let INCREMENT = (state: any) => {
   let current = state.count + 1
   return {
       ...state,
@@ -8,7 +8,7 @@ export let INCREMENT = (state) => {
   }
 }
 
-export let DECREMENT = (state) => {
+export let DECREMENT = (state: any) => {
   let count = state.count - 1
   return {
     ...state,
@@ -16,7 +16,7 @@ export let DECREMENT = (state) => {
   }
 }
 
-export let EXEC_BY = (state, input) => {
+export let EXEC_BY = (state: any, input: any) => {
   let value = Number(input)
   return isNaN(value) ? state : {
     ...state,

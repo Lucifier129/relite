@@ -1,15 +1,15 @@
-export const ANY = (state) => {
+export const ANY = (state: any) => {
   let a
   return a
 }
 
-export const STANDARD = state => {
+export const STANDARD = (state: any) => {
   return {
     bb: 'bb'
   }
 }
 
-export const Payload = (state, payload: {
+export const Payload = (state: any, payload: {
   cc: number
 }) => {
   return {

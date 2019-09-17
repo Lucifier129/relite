@@ -4,6 +4,8 @@
  * A redux-like library for managing state with simpler api.
  */
 
+ import { getKeys } from './utils'
+
 /** Action */
 
 /**
@@ -269,7 +271,7 @@ export interface Listener<
   S extends object,
   AS extends Actions<S>
   > {
-  (data?: Data<S, AS>): any
+  (data: Data<S, AS>): any
 }
 
 /**
@@ -574,14 +576,3 @@ export const createStore: StoreCreator = <
 
   return store
 }
-
-/**
- * Get the Object.keys() as keyof inputed object.
- * 
- * @template T The typeof inputed object. 
- * 
- * @param o A value extends object.
- * 
- * @returns Object.keys(o) with type keyof T.
- */
-const getKeys = <T extends {}>(o: T) => Object.keys(o) as Array<keyof T>

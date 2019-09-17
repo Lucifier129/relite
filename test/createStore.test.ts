@@ -1,13 +1,15 @@
-import { createStore, Action, Actions } from "../index"
+import { createStore, Action, Actions, AnyAction, Data } from "../index"
 import * as actions from "./src/actions.helper"
 import * as errorAction from "./src/actions.error"
 import * as changeAction from "./src/actions.change"
 import * as anyActions from './src/actions.any'
+import { getKeys } from '../utils'
 
 describe("test-createStore", () => {
   it("actions should be object", () => {
     try {
-      createStore(undefined as Actions<Action<{}>>)
+      // @ts-ignore
+      createStore(null as Actions<Partial<object & {}>>)
     } catch (e) {
       expect((e as Error).message).toMatch(
         "Expected first argument to be an object"
@@ -62,7 +64,19 @@ describe("test-createStore", () => {
   it("should change state by store.replaceState", () => {
     let store = createStore(actions, { count: 0 })
 
-    store.replaceState({ count: 3 })
+    let actionKeys = getKeys(actions)
+
+    let newState = { count: 3 }
+    let data = {
+      actionType: actionKeys[3],
+      actionPayload: 3,
+      previousState: { count: 0 },
+      currentState: { count: 3 },
+      start: new Date(),
+      end: new Date()
+    }
+
+    store.replaceState(newState, data)
     expect(store.getState()).toEqual({ count: 3 })
   })
 
@@ -77,8 +91,9 @@ describe("test-createStore", () => {
   })
 
   it("should trigger listeners after state changed", () => {
-    let store = createStore(actions, { count: 0 })
-    let listener = data => {
+    let state = { count: 0 }
+    let store = createStore(actions, state)
+    let listener = (data: Data<typeof state, typeof actions>) => {
       let {
         actionType,
         actionPayload,
@@ -142,7 +157,8 @@ describe("test-createStore", () => {
 
   it("should throw error when action ty is not function", () => {
     let actions = {
-      IIII: undefined as Action<{}>
+      // @ts-ignore
+      IIII: undefined as AnyAction<{}, unknown, Partial<object & {}>>
     }
 
     try {
@@ -167,7 +183,8 @@ describe("test-createStore", () => {
   })
 
   it("should warning when listener has been unsubscribe twice", () => {
-    let store = createStore(actions, { count: 1 })
+    let state = { count: 1 }
+    let store = createStore(actions, state)
     let listener = jest.fn()
 
     store.subscribe(listener)
@@ -175,7 +192,16 @@ describe("test-createStore", () => {
 
     expect(listener).toBeCalledTimes(1)
 
-    store.replaceState({ count: 2 }, undefined, true)
+    let actionKeys = getKeys(actions)
+    let data = {
+      actionType: actionKeys[2],
+      actionPayload: undefined,
+      previousState: { count: 0 },
+      currentState: { count: 3 },
+      start: new Date(),
+      end: new Date()
+    }
+    store.replaceState({ count: 2 }, data, true)
 
     expect(listener).toBeCalledTimes(1)
   })
