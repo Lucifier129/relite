@@ -4,7 +4,7 @@
  * A redux-like library for managing state with simpler api.
  */
 
- import { getKeys } from './utils'
+ import { getKeys } from './util'
 
 /** Action */
 

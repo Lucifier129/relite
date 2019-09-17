@@ -3,7 +3,7 @@ import * as actions from "./src/actions.helper"
 import * as errorAction from "./src/actions.error"
 import * as changeAction from "./src/actions.change"
 import * as anyActions from './src/actions.any'
-import { getKeys } from '../utils'
+import { getKeys } from '../util'
 
 describe("test-createStore", () => {
   it("actions should be object", () => {
