@@ -149,8 +149,7 @@ export type Actions<S extends object> = {
 
 export type Args<
   S extends object,
-  AS extends Actions<Partial<S & StateFromAS<AS>>>,
-  A extends AnyAction<Partial<S & StateFromAS<AS>>>
+  A extends AnyAction<S>
   > = A extends ((state: S, ...args: infer Args) => any)
   ? Args
   : never
@@ -170,8 +169,8 @@ export type Args<
  */
 export type Curring<
   S extends object,
-  AS extends Actions<Partial<S & StateFromAS<AS>>>,
-  A extends AnyAction<Partial<S & StateFromAS<AS>>>
+  AS extends Actions<S>,
+  A extends AnyAction<S>
   > = A extends ((state: S, ...args: infer Args) => S)
   ? ((...args: Args) => S)
   : never
@@ -185,7 +184,7 @@ export type Curring<
  */
 export type Currings<
   S extends object,
-  AS extends Actions<Partial<S & StateFromAS<AS>>>
+  AS extends Actions<S>
   > = {
     [k in keyof AS]: Curring<S, AS, AS[k]>
   }
@@ -209,7 +208,7 @@ export type PayloadFromAction<A> = A extends Action<object, infer P> ? P : A
  */
 export interface Data<
   S extends object,
-  AS extends Actions<Partial<S & StateFromAS<AS>>>
+  AS extends Actions<S>
   > {
   /**
    * The identifier `actionType` of `Action` of this change.
@@ -251,7 +250,7 @@ export interface Data<
  */
 export interface Subscribe<
   S extends object,
-  AS extends Actions<Partial<S & StateFromAS<AS>>>
+  AS extends Actions<S>
   > {
   (listener: Listener<S, AS>): () => void
 }
@@ -268,7 +267,7 @@ export interface Subscribe<
  */
 export interface Listener<
   S extends object,
-  AS extends Actions<Partial<S & StateFromAS<AS>>>
+  AS extends Actions<S>
   > {
   (data?: Data<S, AS>): any
 }
@@ -282,7 +281,7 @@ export interface Listener<
  */
 export interface Publish<
   S extends object,
-  AS extends Actions<Partial<S & StateFromAS<AS>>>
+  AS extends Actions<S>
   > {
   (data: Data<S, AS>): void
 }
@@ -295,9 +294,9 @@ export interface Publish<
  */
 export interface ReplaceState<
   S extends object,
-  AS extends Actions<Partial<S & StateFromAS<AS>>>
+  AS extends Actions<S>
   > {
-  (nextState: S, data?: Data<S, AS>, silent?: boolean): void
+  (nextState: S, data: Data<S, AS>, silent?: boolean): void
 }
 
 /**
@@ -309,8 +308,8 @@ export interface ReplaceState<
  */
 export type Dispatch<
   S extends object,
-  AS extends Actions<Partial<S & StateFromAS<AS>>>,
-  > = <K extends keyof AS>(actionType: K, ...args: Args<S, AS, AS[K]>) => S
+  AS extends Actions<S>,
+  > = <K extends keyof AS>(actionType: K, ...args: Args<S, AS[K]>) => S
 
 /**
  * An state updator which get the final next state and call `replaceState()`
@@ -334,7 +333,7 @@ export interface StateUpdator<S extends object> {
  */
 export interface Store<
   S extends object,
-  AS extends Actions<Partial<S & StateFromAS<AS>>>
+  AS extends Actions<S>
   > {
   /**
    * Contain all caller curring from `Action` passed in `createStore` and
@@ -342,7 +341,7 @@ export interface Store<
    *
    * CurryingAction
    */
-  actions: Currings<Partial<S & StateFromAS<AS>>, AS>
+  actions: Currings<S, AS>
 
   /**
    * Reads the state tree managed by the store.
@@ -360,7 +359,7 @@ export interface Store<
    * @param [silent] The signature indicate if we need to `publish()`. `true`
    * indicate not. `false` indicate yes. Default value is `false`.
    */
-  replaceState: ReplaceState<Partial<S & StateFromAS<AS>>, AS>
+  replaceState: ReplaceState<S, AS>
   /**
    * Dispatches an Action. It is the only way to trigger a state change.
    *
@@ -378,7 +377,7 @@ export interface Store<
    *
    * @returns For convenience, the next state object you changed to.
    */
-  dispatch: Dispatch<Partial<S & StateFromAS<AS>>, AS>
+  dispatch: Dispatch<S, AS>
 
   /**
    * Adds a change listener. It will be called any time an Action is
@@ -405,7 +404,7 @@ export interface Store<
    *
    * @returns `unsubscribe` A function to remove this listener.
    */
-  subscribe: Subscribe<Partial<S & StateFromAS<AS>>, AS>
+  subscribe: Subscribe<S, AS>
 
   /**
    * Broadcast all the listener attached before.
@@ -413,7 +412,7 @@ export interface Store<
    * @param data The state change information.The data object that need to
    * pass in all `Listener`.
    */
-  publish: Publish<Partial<S & StateFromAS<AS>>, AS>
+  publish: Publish<S, AS>
 }
 
 /**
@@ -432,7 +431,7 @@ export interface StoreCreator {
   <S extends object, AS extends Actions<Partial<S & StateFromAS<AS>>>>(
     actions: AS,
     initialState?: S
-  ): Store<S, AS>
+  ): Store<Partial<S & StateFromAS<AS>>, AS>
 }
 
 /** CreateStore */
@@ -458,7 +457,7 @@ export const createStore: StoreCreator = <
   AS extends Actions<Partial<S & StateFromAS<AS>>>
 >(
   actions: AS,
-  initialState: S
+  initialState?: Partial<S & StateFromAS<AS>>
 ) => {
   if (Object.prototype.toString.call(actions) !== "[object Object]") {
     throw new Error(`Expected first argument to be an object`)
@@ -485,7 +484,7 @@ export const createStore: StoreCreator = <
     listeners.forEach(listener => listener(data))
   }
 
-  let currentState: Partial<S & StateFromAS<AS>> = initialState
+  let currentState: Partial<S & StateFromAS<AS>> = initialState || {}
 
   let getState = () => currentState
   let replaceState: ReplaceState<Partial<S & StateFromAS<AS>>, AS> = (
@@ -526,7 +525,7 @@ export const createStore: StoreCreator = <
         return currentState
       }
 
-      let data: Data<S, AS> = {
+      let data: Data<Partial<S & StateFromAS<AS>>, AS> = {
         start,
         end: new Date(),
         actionType,
@@ -548,7 +547,7 @@ export const createStore: StoreCreator = <
   ).reduce(
     (obj, actionType) => {
       if (typeof actions[actionType] === "function") {
-        obj[actionType] = ((...args: Args<Partial<S & StateFromAS<AS>>, AS, AS[typeof actionType]>) =>
+        obj[actionType] = ((...args: Args<Partial<S & StateFromAS<AS>>, AS[typeof actionType]>) =>
           dispatch(actionType, ...args)) as Curring<
             Partial<S & StateFromAS<AS>>,
             AS,
@@ -564,7 +563,7 @@ export const createStore: StoreCreator = <
     {} as Currings<Partial<S & StateFromAS<AS>>, AS>
   )
 
-  let store: Store<S, AS> = {
+  let store: Store<Partial<S & StateFromAS<AS>>, AS> = {
     actions: curryActions,
     getState,
     replaceState,
