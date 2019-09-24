@@ -208,6 +208,8 @@ describe("test-createStore", () => {
   it('test type', () => {
     let state = { count: 1 }
     let store = createStore(anyActions, state)
+    let { PAYLOAD } = store.actions
+    let { cc, count, bb } = store.getState()
     // let listener = jest.fn()
 
     // store.subscribe(listener)

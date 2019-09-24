@@ -1,18 +1,23 @@
-export const ANY = (state: any) => {
+export const UNDEFINED = (state: object) => {
   let a
   return a
 }
 
-export const STANDARD = (state: any) => {
+export const STANDARD = (state: { }) => {
   return {
     bb: 'bb'
   }
 }
 
-export const Payload = (state: any, payload: {
+export const PAYLOAD = (state: { }, payload: {
   cc: number
 }) => {
   return {
     cc: 'bb'
   }
+}
+
+export const ANY = (state: { }) => {
+  let a: any
+  return a
 }

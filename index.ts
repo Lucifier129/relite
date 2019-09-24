@@ -146,7 +146,7 @@ export type StateFromAS<AS> = UnionToIntersection<UnionStateFromAS<AS>>
  * @template S The type of state to be held by the store.
  */
 export type Actions<S extends object> = {
-  [propName: string]: AnyAction<S, unknown, S>
+  [propName: string]: AnyAction<S, any, S | any>
 }
 
 /**
