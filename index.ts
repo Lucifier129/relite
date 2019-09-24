@@ -30,7 +30,7 @@
  *
  * @returns A new state created just now.
  */
-export interface AnyAction<S extends object = {}, P = unknown, RS = unknown> {
+export interface AnyAction<S extends object = {}, P = any, RS = any> {
   (state: S, payload: P): RS
 }
 
@@ -42,7 +42,7 @@ export interface AnyAction<S extends object = {}, P = unknown, RS = unknown> {
  * @template S Store state type.
  * @template P Payload type.
  */
-export type Action<S extends object, P = unknown> = AnyAction<S, P, S>
+export type Action<S extends object, P = any> = AnyAction<S, P, S>
 
 /**
  * Curring Action

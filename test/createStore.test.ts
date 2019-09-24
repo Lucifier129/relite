@@ -205,4 +205,27 @@ describe("test-createStore", () => {
 
     expect(listener).toBeCalledTimes(1)
   })
+
+  it('test type', () => {
+    let state = { count: 1 }
+    let store = createStore(anyActions, state)
+    // let listener = jest.fn()
+
+    // store.subscribe(listener)
+
+    // expect(listener).toBeCalledTimes(1)
+
+    // let actionKeys = getKeys(anyActions)
+    // let data = {
+    //   actionType: actionKeys[2],
+    //   actionPayload: undefined,
+    //   previousState: { count: 0 },
+    //   currentState: { count: 3 },
+    //   start: new Date(),
+    //   end: new Date()
+    // }
+    // store.replaceState({ count: 2 }, data, true)
+
+    // expect(listener).toBeCalledTimes(1)
+  })
 })
