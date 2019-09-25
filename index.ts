@@ -69,32 +69,6 @@ export interface CurringAction<S extends object> {
 }
 
 /**
- * `CurringActionWithPayload` has one argument `Payload` certainly and
- * return new store state.
- *
- * @template S Store state type.
- * @template P Payload type.
- *
- * @param payload
- */
-export interface CurringActionWithPayload<S extends object, P> {
-  (payload: P): S
-}
-
-/**
- * `CurringActionWithPayloadOptional` has one argument `Payload` optionally
- * and return new store state.
- *
- * @template S Store state type
- * @template P Payload type
- *
- * @param [payload]
- */
-export interface CurringActionWithPayloadOptional<S extends object, P> {
-  (payload?: P): S
-}
-
-/**
  * Transiform *Union* type to *Intersection* type
  *
  * string | number => string & number
@@ -180,7 +154,6 @@ export type Args<
  */
 export type Curring<
   S extends object,
-  AS extends Actions<S>,
   A extends AnyAction<S>
   > = A extends ((state: S, ...args: infer Args) => S)
   ? ((...args: Args) => S)
@@ -197,7 +170,7 @@ export type Currings<
   S extends object,
   AS extends Actions<S>
   > = {
-    [k in keyof AS]: Curring<S, AS, AS[k]>
+    [k in keyof AS]: Curring<S, AS[k]>
   }
 
 /**
@@ -561,7 +534,6 @@ export const createStore: StoreCreator = <
         obj[actionType] = ((...args: Args<Partial<S & StateFromAS<AS>>, AS[typeof actionType]>) =>
           dispatch(actionType, ...args)) as Curring<
             Partial<S & StateFromAS<AS>>,
-            AS,
             AS[keyof AS]
           >
       } else {
