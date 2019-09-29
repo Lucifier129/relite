@@ -1,8 +1,8 @@
-export const NOCHANGE = (state) => {
+export const NOCHANGE = (state: any) => {
   return state
 }
 
-export const CHANGE = state => {
+export const CHANGE = (state: any) => {
   return {
     ...state,
     count: state.count
