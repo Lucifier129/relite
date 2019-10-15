@@ -17,7 +17,7 @@ describe("test-createStore", () => {
   })
 
   it("should not continue to work after throw an error", () => {
-    let store = createStore(errorAction)
+    let store = createStore(errorAction, {})
     try {
       store.actions.TEST(store)
     } catch (e) {
@@ -161,7 +161,7 @@ describe("test-createStore", () => {
     }
 
     try {
-      createStore(actions)
+      createStore(actions, {})
     } catch (e) {
       expect((e as Error).message).toMatch("Action must be a function. accept")
     }
@@ -206,7 +206,7 @@ describe("test-createStore", () => {
   })
 
   it('test type', () => {
-    let state = { count: 1 }
+    let state = { count: 1, cc: '', bb: '' }
     // Don't throw error is great.
     let store = createStore(anyActions, state)
     let { PAYLOAD } = store.actions

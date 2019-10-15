@@ -155,7 +155,7 @@ export type Args<
 export type Curring<
   S extends object,
   A extends AnyAction<S>
-  > = A extends ((state: S, ...args: infer Args) => S)
+  > = A extends ((state: Partial<S>, ...args: infer Args) => Partial<S>)
   ? ((...args: Args) => S)
   : never
 
@@ -178,7 +178,7 @@ export type Currings<
  *
  * @template A The type of `Action` which we want to infer from.
  */
-export type PayloadFromAction<A> = A extends Action<object, infer P> ? P : A
+export type PayloadFromAction<A> = A extends Action<any, infer P> ? P : A
 
 /** Data */
 
@@ -203,18 +203,18 @@ export interface Data<
    * The additional `Payload` data of a change from the `Action` of this
    * change.
    */
-  actionPayload: PayloadFromAction<Action<Partial<S & StateFromAS<AS>>>>
+  actionPayload: PayloadFromAction<Action<S>>
 
   /**
    * The snapshoot of state before this change. The state that passed into
    * `Action`.
    */
-  previousState: Partial<S & StateFromAS<AS>>
+  previousState: S
   /**
    * The state will be after this change. The state that returned from
    * `Action`.
    */
-  currentState: Partial<S & StateFromAS<AS>>
+  currentState: S
   /**
    * The start time of this change occur.
    */
@@ -412,10 +412,13 @@ export interface Store<
  * @template AS The type of actions those may be call by dispatch.
  */
 export interface StoreCreator {
-  <S extends object, AS extends Actions<Partial<S & StateFromAS<AS>>>>(
+  <
+    S extends object,
+    AS extends Actions<S>
+  >(
     actions: AS,
-    initialState?: S
-  ): Store<Partial<S & StateFromAS<AS>>, AS>
+    initialState: S
+  ): Store<S, AS>
 }
 
 /** CreateStore */
@@ -438,18 +441,18 @@ export interface StoreCreator {
  */
 export const createStore: StoreCreator = <
   S extends object,
-  AS extends Actions<Partial<S & StateFromAS<AS>>>
+  AS extends Actions<S>
 >(
   actions: AS,
-  initialState?: Partial<S & StateFromAS<AS>>
+  initialState: S
 ) => {
   if (Object.prototype.toString.call(actions) !== "[object Object]") {
     throw new Error(`Expected first argument to be an object`)
   }
 
-  let listeners: Listener<Partial<S & StateFromAS<AS>>, AS>[] = []
-  let subscribe: Subscribe<Partial<S & StateFromAS<AS>>, AS> = (
-    listener: Listener<Partial<S & StateFromAS<AS>>, AS>
+  let listeners: Listener<S, AS>[] = []
+  let subscribe: Subscribe<S, AS> = (
+    listener: Listener<S, AS>
   ) => {
     listeners.push(listener)
     return () => {
@@ -464,14 +467,14 @@ export const createStore: StoreCreator = <
     }
   }
 
-  let publish: Publish<Partial<S & StateFromAS<AS>>, AS> = data => {
+  let publish: Publish<S, AS> = data => {
     listeners.forEach(listener => listener(data))
   }
 
-  let currentState: Partial<S & StateFromAS<AS>> = initialState || {}
+  let currentState: S = initialState
 
   let getState = () => currentState
-  let replaceState: ReplaceState<Partial<S & StateFromAS<AS>>, AS> = (
+  let replaceState: ReplaceState<S, AS> = (
     nextState,
     data,
     silent
@@ -483,7 +486,7 @@ export const createStore: StoreCreator = <
   }
 
   let isDispatching: boolean = false
-  let dispatch: Dispatch<Partial<S & StateFromAS<AS>>, AS> = (
+  let dispatch: Dispatch<S, AS> = (
     actionType,
     actionPayload
   ) => {
@@ -494,7 +497,7 @@ export const createStore: StoreCreator = <
     }
 
     let start: Date = new Date()
-    let nextState: Partial<S & StateFromAS<AS>> = currentState
+    let nextState: S = currentState
     try {
       isDispatching = true
       nextState = actions[actionType](currentState, actionPayload)
@@ -504,12 +507,12 @@ export const createStore: StoreCreator = <
       isDispatching = false
     }
 
-    let updateState: StateUpdator<Partial<S & StateFromAS<AS>>> = nextState => {
+    let updateState: StateUpdator<S> = nextState => {
       if (nextState === currentState) {
         return currentState
       }
 
-      let data: Data<Partial<S & StateFromAS<AS>>, AS> = {
+      let data: Data<S, AS> = {
         start,
         end: new Date(),
         actionType,
@@ -526,14 +529,14 @@ export const createStore: StoreCreator = <
     return updateState(nextState)
   }
 
-  let curryActions: Currings<Partial<S & StateFromAS<AS>>, AS> = getKeys(
+  let curryActions: Currings<S, AS> = getKeys(
     actions
   ).reduce(
     (obj, actionType) => {
       if (typeof actions[actionType] === "function") {
-        obj[actionType] = ((...args: Args<Partial<S & StateFromAS<AS>>, AS[typeof actionType]>) =>
+        obj[actionType] = ((...args: Args<S, AS[typeof actionType]>) =>
           dispatch(actionType, ...args)) as Curring<
-            Partial<S & StateFromAS<AS>>,
+            S,
             AS[keyof AS]
           >
       } else {
@@ -543,10 +546,10 @@ export const createStore: StoreCreator = <
       }
       return obj
     },
-    {} as Currings<Partial<S & StateFromAS<AS>>, AS>
+    {} as Currings<S, AS>
   )
 
-  let store: Store<Partial<S & StateFromAS<AS>>, AS> = {
+  let store: Store<S, AS> = {
     actions: curryActions,
     getState,
     replaceState,
