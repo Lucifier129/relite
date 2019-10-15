@@ -69,52 +69,6 @@ export interface CurringAction<S extends object> {
 }
 
 /**
- * Transiform *Union* type to *Intersection* type
- *
- * string | number => string & number
- *
- * @template U The input *Union* type
- */
-export type UnionToIntersection<U> = (U extends any
-  ? (k: U) => void
-  : never) extends ((k: infer I) => void)
-  ? I
-  : never
-
-/**
- * Get return type of `Action`
- *
- * Filter {`any`, `unknown`} => Filter Exclude{`object`} => `object`
- *
- * @template A The input `Action` type
- */
-export type StateFromAction<A> = A extends AnyAction
-  ? unknown extends ReturnType<A>
-  ? {}
-  : ReturnType<A> extends object
-  ? ReturnType<A>
-  : {}
-  : {}
-
-/**
- * Get *Union* type of states from `Actions`
- *
- * Action[] => [*Union* ReturnType<Action>]
- *
- * @template AS The input `Actions` type
- */
-export type UnionStateFromAS<AS> = {
-  [K in keyof AS]: StateFromAction<AS[K]>
-}[keyof AS]
-
-/**
- * Get *Intersection* type of states from `Actions`
- *
- * @template AS The input `Actions` type
- */
-export type StateFromAS<AS> = UnionToIntersection<UnionStateFromAS<AS>>
-
-/**
  * The collection of `Action`.
  *
  * @template S The type of state to be held by the store.
@@ -332,7 +286,7 @@ export interface Store<
    *
    * @returns The current state tree of your application that just can read.
    */
-  getState(): Partial<S & StateFromAS<AS>>
+  getState(): S
 
   /**
    * Cover the state with the new state and the data passed in. It will
