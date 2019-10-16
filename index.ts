@@ -74,7 +74,7 @@ export interface CurringAction<S extends object> {
  * @template S The type of state to be held by the store.
  */
 export type Actions<S extends object> = {
-  [propName: string]: AnyAction<S, any, S | any>
+  [propName: string]: AnyAction<S, any, S>
 }
 
 /**
@@ -89,7 +89,7 @@ export type Actions<S extends object> = {
 export type Args<
   S extends object,
   A extends AnyAction<S>
-  > = A extends ((state: S, ...args: infer Args) => any)
+  > = A extends ((state: S, ...args: infer Args) => S)
   ? Args
   : never
 
@@ -233,8 +233,12 @@ export interface Publish<
 export interface ReplaceState<
   S extends object,
   AS extends Actions<S>
-  > {
-  (nextState: S, data: Data<S, AS>, silent?: boolean): void
+> {
+  (
+    nextState: S,
+    data: Data<S, AS>,
+    silent?: boolean
+  ): void
 }
 
 /**
@@ -247,7 +251,10 @@ export interface ReplaceState<
 export type Dispatch<
   S extends object,
   AS extends Actions<S>,
-  > = <K extends keyof AS>(actionType: K, ...args: Args<S, AS[K]>) => S
+> = <K extends keyof AS>(
+  actionType: K,
+  ...args: Args<S, AS[K]>
+) => S
 
 /**
  * An state updator which get the final next state and call `replaceState()`
@@ -272,7 +279,7 @@ export interface StateUpdator<S extends object> {
 export interface Store<
   S extends object,
   AS extends Actions<S>
-  > {
+> {
   /**
    * Contain all caller curring from `Action` passed in `createStore` and
    * `dispatch`. Could call dispatch whith mapped `Action` type.
