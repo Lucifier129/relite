@@ -204,12 +204,4 @@ describe("test-createStore", () => {
 
     expect(listener).toBeCalledTimes(1)
   })
-
-  it('test type', () => {
-    let state = { count: 1, cc: '', bb: '' }
-    // Don't throw error is great.
-    let store = createStore(anyActions, state)
-    let { PAYLOAD } = store.actions
-    let { cc, count, bb } = store.getState()
-  })
 })
