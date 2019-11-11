@@ -44,16 +44,6 @@ export interface AnyAction<S extends object = {}, P = any, RS extends object = {
 }
 
 /**
- * The standard `Action`
- *
- * Pass in `object` type state and payload, return `object` type state.
- *
- * @template S Store state type.
- * @template P Payload type.
- */
-export type Action<S extends object, P = any> = AnyAction<S, P, S>
-
-/**
  * The collection of `Action`.
  *
  * @template S The type of state to be held by the store.
@@ -141,7 +131,7 @@ export interface Data<
    * The additional `Payload` data of a change from the `Action` of this
    * change.
    */
-  actionPayload: PayloadFromAction<Action<S>>
+  actionPayload: PayloadFromAction<AnyAction<S, any, S>>
 
   /**
    * The snapshoot of state before this change. The state that passed into
@@ -505,3 +495,18 @@ export const createStore: StoreCreator = <
 
   return store
 }
+
+/**
+ * The `Action` type for user to contruct input `Action`
+ *
+ * Pass in `object` type state and payload, return `object` type state.
+ *
+ * @template State Store state type.
+ * @template P Payload type. It is optional
+ */
+export type Action<
+  State extends object,
+  Payload = unknown
+> = unknown extends Payload
+  ? <S extends State>(state: S) => S
+  : <S extends State>(state: S, payload: Payload) => S
