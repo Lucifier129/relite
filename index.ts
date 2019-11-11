@@ -109,9 +109,9 @@ export type Args<
 export type Curring<
   S extends object,
   A extends AnyAction<S>
-  > = A extends ((state: Partial<S>, ...args: infer Args) => Partial<S>)
+  > = A extends ((state: S, ...args: infer Args) => S)
   ? ((...args: Args) => S)
-  : never
+  : () => S
 
 /**
  * The cyrring `Actions`. Each `Action` in this will be optional.
