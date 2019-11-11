@@ -39,7 +39,7 @@ export const getKeys = <T extends {}>(o: T) => Object.keys(o) as Array<keyof T>
  *
  * @returns A new state created just now.
  */
-export interface AnyAction<S extends object = {}, P = any, RS = any> {
+export interface AnyAction<S extends object = {}, P = any, RS extends object = {}> {
   (state: S, payload: P): RS
 }
 
@@ -52,21 +52,6 @@ export interface AnyAction<S extends object = {}, P = any, RS = any> {
  * @template P Payload type.
  */
 export type Action<S extends object, P = any> = AnyAction<S, P, S>
-
-/**
- * Curring Action
- *
- * There are three type Action after curring.
- */
-
-/**
- * `CurringAction` only return new store state.
- *
- * @template S Store state type.
- */
-export interface CurringAction<S extends object> {
-  (): S
-}
 
 /**
  * The collection of `Action`.
@@ -94,11 +79,10 @@ export type Args<
   : never
 
 /**
- * In Relite, before actions exported by `store` them must be currying from some
- * `Action` those looks like `(s: State, p?: Payload) => State` to a `CurryingAction`
- * that looks like `(p?: Payload) => State` firstly.
+ * In Relite, before actions exported by `store` them must be currying from input
+ * `Action` to a function that looks like `(p?: Payload) => State` firstly.
  *
- * The actions consist of `Action` need map to the actions consist of `CurringAction`.
+ * The actions consist of `Action` need map to the actions consist of currying action.
  *
  * The code hint of actions and the `Payload` type hint will work after doing this.
  *
@@ -132,7 +116,7 @@ export type Currings<
  *
  * @template A The type of `Action` which we want to infer from.
  */
-export type PayloadFromAction<A> = A extends Action<any, infer P> ? P : A
+export type PayloadFromAction<A> = A extends AnyAction<any, infer P, any> ? P : A
 
 /** Data */
 
