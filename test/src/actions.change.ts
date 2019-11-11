@@ -6,8 +6,8 @@ export type Action<
   State extends object,
   Payload = unknown
 > = unknown extends Payload
-  ? (state: State) => State
-  : (state: State, payload: Payload) => State
+  ? <S extends State>(state: S) => S
+  : <S extends State>(state: S, payload: Payload) => S
 
 export const NOCHANGE: Action<State> = (state) => {
   return state
