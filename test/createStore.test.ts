@@ -32,7 +32,7 @@ describe("test-createStore", () => {
     let listener = jest.fn()
 
     store.subscribe(listener)
-    store.actions.CHANGE()
+    store.actions.CHANGE(3)
 
     expect(listener).toBeCalledTimes(1)
 
