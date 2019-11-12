@@ -34,11 +34,28 @@ the action of `relite` looks like a reducer of redux, but more simple and powerf
 * action-handler is the function accepts two arguments: state and action-payload
 * action-result is the result of function
 */
+
+// javascript
 export let EXEC_BY = (state, input) => {
 	let value = parseFloat(input, 10)
 	return isNaN(value) ? state : {
 		...state,
 		count: state.count + value
+	}
+}
+
+// typescript
+import { Action } from 'relite'
+
+type State = {
+  // ...
+  count: number
+}
+
+export let EXEC_BY: Action<State, number> = (state, input) => {
+	return isNaN(value) ? state : {
+		...state,
+		count: state.count + input
 	}
 }
 ```
