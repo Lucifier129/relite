@@ -39,8 +39,8 @@ export const getKeys = <T extends {}>(o: T) => Object.keys(o) as Array<keyof T>
  *
  * @returns A new state created just now.
  */
-export interface AnyAction<S extends object = {}, P = any, RS extends object = {}> {
-  (state: S, payload: P): RS
+export interface AnyAction<S extends object = {}, P = any> {
+  (state: S, payload: P): S
 }
 
 /**
@@ -49,7 +49,7 @@ export interface AnyAction<S extends object = {}, P = any, RS extends object = {
  * @template S The type of state to be held by the store.
  */
 export type Actions<S extends object> = {
-  [propName: string]: AnyAction<S, any, S>
+  [propName: string]: AnyAction<S, any>
 }
 
 /**
@@ -64,7 +64,7 @@ export type Actions<S extends object> = {
 export type Args<
   S extends object,
   A extends AnyAction<S>
-  > = A extends ((state: S, ...args: infer Args) => S)
+> = A extends ((state: S, ...args: infer Args) => S)
   ? Args
   : never
 
@@ -83,7 +83,7 @@ export type Args<
 export type Curring<
   S extends object,
   A extends AnyAction<S>
-  > = A extends ((state: S, ...args: infer Args) => S)
+> = A extends ((state: S, ...args: infer Args) => S)
   ? ((...args: Args) => S)
   : () => S
 
@@ -97,16 +97,16 @@ export type Curring<
 export type Currings<
   S extends object,
   AS extends Actions<S>
-  > = {
-    [k in keyof AS]: Curring<S, AS[k]>
-  }
+> = {
+  [k in keyof AS]: Curring<S, AS[k]>
+}
 
 /**
  * Infer the `Payload` data shape from an `Action`.
  *
  * @template A The type of `Action` which we want to infer from.
  */
-export type PayloadFromAction<A> = A extends AnyAction<any, infer P, any> ? P : A
+export type PayloadFromAction<A> = A extends AnyAction<any, infer P> ? P : A
 
 /** Data */
 
@@ -121,7 +121,7 @@ export type PayloadFromAction<A> = A extends AnyAction<any, infer P, any> ? P : 
 export interface Data<
   S extends object,
   AS extends Actions<S>
-  > {
+> {
   /**
    * The identifier `actionType` of `Action` of this change.
    */
@@ -131,7 +131,7 @@ export interface Data<
    * The additional `Payload` data of a change from the `Action` of this
    * change.
    */
-  actionPayload: PayloadFromAction<AnyAction<S, any, S>>
+  actionPayload: PayloadFromAction<AnyAction<S, any>>
 
   /**
    * The snapshoot of state before this change. The state that passed into
