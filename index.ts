@@ -39,7 +39,7 @@ export const getKeys = <T extends {}>(o: T) => Object.keys(o) as Array<keyof T>
  *
  * @returns A new state created just now.
  */
-export interface AnyAction<S extends object = {}, P = any> {
+export interface AnyAction<S extends object = {}, P = unknown> {
   (state: S, payload: P): S
 }
 
@@ -181,7 +181,7 @@ export interface Listener<
   S extends object,
   AS extends Actions<S>
   > {
-  (data: Data<S, AS>): any
+  (data: Data<S, AS>): unknown
 }
 
 /**
