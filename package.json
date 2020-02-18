@@ -6,7 +6,9 @@
   "typings": "index.d.ts",
   "files": [
     "index.d.ts",
-    "index.js"
+    "index.js",
+    "logger.d.ts",
+    "logger.js"
   ],
   "scripts": {
     "test": "jest --coverage",
