@@ -22,8 +22,8 @@ index.d.ts
 
 index.js
 
-util.d.ts
+logger.d.ts
 
-util.js
+logger.js
 
 publish
