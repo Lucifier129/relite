@@ -120,6 +120,18 @@ store.dispatch('EXEC_ASYNC', 10) // dispatch the action manually
 
 ```
 
+## Logger
+
+```js
+import { createStore } from 'relite'
+import createLogger from 'relite/logger'
+
+...
+
+const store = createStore(actions, initialState)
+store.subscribe(createLogger())
+```
+
 ## End
 
 Issue and pull request is welcome!
