@@ -48,9 +48,7 @@ export interface AnyAction<S extends object = {}, P = unknown> {
  *
  * @template S The type of state to be held by the store.
  */
-export type Actions<S extends object> = {
-  [propName: string]: AnyAction<S, any>
-}
+export type Actions<S extends object> = Record<string, AnyAction<S, any>>
 
 /**
  * Get the rest arguments of action.
