@@ -1,16 +1,16 @@
-import { Action } from '../../'
+import { Action } from "../../";
 
 interface State {
-  count: number
+  count: number;
 }
 
 export const NOCHANGE: Action<State> = (state) => {
-  return state
-}
+  return state;
+};
 
 export const CHANGE: Action<State, number> = (state, count) => {
   return {
     ...state,
-    count
-  }
-}
+    count,
+  };
+};
