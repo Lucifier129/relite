@@ -1,23 +1,26 @@
 export const UNDEFINED = (state: object) => {
-  let a
-  return a
-}
+  let a;
+  return a;
+};
 
-export const STANDARD = (state: { }) => {
+export const STANDARD = (state: {}) => {
   return {
-    bb: 'bb'
-  }
-}
+    bb: "bb",
+  };
+};
 
-export const PAYLOAD = (state: { }, payload: {
-  cc: number
-}) => {
+export const PAYLOAD = (
+  state: {},
+  payload: {
+    cc: number;
+  }
+) => {
   return {
-    cc: 'bb'
-  }
-}
+    cc: "bb",
+  };
+};
 
-export const ANY = (state: { }) => {
-  let a: any
-  return a
-}
+export const ANY = (state: {}) => {
+  let a: any;
+  return a;
+};
